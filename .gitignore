@@ -1,0 +1,21 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+.DS_Store
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Misc
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Python helper artifacts (used only to generate assets on Linux)
+__pycache__/
