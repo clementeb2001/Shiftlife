@@ -214,115 +214,109 @@ struct WeekView: View {
         }
     }
 
+    // MARK: Pills
+
+    private func adultsWithShift(on day: Date) -> [HouseholdMember] {
+        store.data.members.filter { $0.role != .child && shiftType(for: $0.id, on: day) != nil }
+    }
+
+    private func openTasks(on day: Date) -> [TaskItem] {
+        store.data.tasks.filter { !$0.isDone && ($0.dueDate.map { cal.isDate($0, inSameDayAs: day) } ?? false) }
+    }
+
+    private func shiftPill(_ m: HouseholdMember, _ t: ShiftType, day: Date, compact: Bool, full: Bool) -> some View {
+        Text(compact ? t.abbreviation : t.name)
+            .font(.system(size: compact ? 8.5 : 10, weight: .bold))
+            .foregroundStyle(.white)
+            .lineLimit(compact ? 1 : 2)
+            .minimumScaleFactor(0.7)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: full ? (compact ? 30 : 52) : 0)
+            .padding(.horizontal, 4).padding(.vertical, compact ? 2 : 4)
+            .background(t.color.color, in: RoundedRectangle(cornerRadius: compact ? 4 : 6))
+            .contentShape(Rectangle())
+            .onTapGesture { selectedCell = CellSelection(member: m, day: day) }
+    }
+
+    private func eventPill(_ ev: CalendarEvent, compact: Bool) -> some View {
+        let c = store.eventColor(ev).color
+        return Text(ev.title)
+            .font(.system(size: compact ? 8 : 10, weight: .semibold))
+            .foregroundStyle(c)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 4).padding(.vertical, compact ? 2 : 3)
+            .background(c.opacity(0.16), in: RoundedRectangle(cornerRadius: compact ? 4 : 6))
+            .overlay(RoundedRectangle(cornerRadius: compact ? 4 : 6)
+                .stroke(Theme.warning, lineWidth: isCareOpen(ev) ? 1.5 : 0))
+            .contentShape(Rectangle())
+            .onTapGesture { editingEvent = ev }
+    }
+
+    private func taskPill(_ t: TaskItem, compact: Bool) -> some View {
+        Text("✓ \(t.title)")
+            .font(.system(size: compact ? 8 : 10, weight: .semibold))
+            .foregroundStyle(Theme.subtleText)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 4).padding(.vertical, compact ? 2 : 3)
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: compact ? 4 : 6))
+    }
+
+    /// Vertical stack of pills for a day: shifts (solid) fill when nothing else,
+    /// then events (person colour) and tasks. `cap` limits events in month cells.
+    private func dayPillStack(_ day: Date, compact: Bool, cap: Int? = nil, showTasks: Bool = true) -> some View {
+        let shiftMembers = adultsWithShift(on: day)
+        let evs = events(on: day)
+        let tks = showTasks ? openTasks(on: day) : []
+        let full = evs.isEmpty && tks.isEmpty
+        let shownEvs = cap.map { Array(evs.prefix($0)) } ?? evs
+        let overflow = cap.map { max(0, evs.count - $0) } ?? 0
+        return VStack(spacing: compact ? 2 : 4) {
+            ForEach(shiftMembers) { m in
+                if let t = shiftType(for: m.id, on: day) {
+                    shiftPill(m, t, day: day, compact: compact, full: full)
+                }
+            }
+            ForEach(shownEvs) { ev in eventPill(ev, compact: compact) }
+            ForEach(tks) { t in taskPill(t, compact: compact) }
+            if overflow > 0 {
+                Text("+\(overflow)").font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(Theme.subtleText).frame(maxWidth: .infinity)
+            }
+        }
+    }
+
     // MARK: Woche
 
     @ViewBuilder private var weekView: some View {
-        Card {
-            VStack(spacing: Theme.Space.s) {
-                weekGridHeader
-                ForEach(store.data.members) { m in weekGridRow(m) }
-                Text("Zelle tippen = Dienst ändern · Datum tippen = Tagesansicht.")
+        Card(padding: Theme.Space.m) {
+            VStack(spacing: 6) {
+                HStack(alignment: .top, spacing: 5) {
+                    ForEach(weekDays, id: \.self) { day in
+                        VStack(spacing: 5) {
+                            Button { anchor = day; mode = .day } label: {
+                                VStack(spacing: 1) {
+                                    Text(Format.weekdayShort(day)).font(.system(size: 9, weight: .bold))
+                                        .foregroundStyle(Theme.subtleText)
+                                    Text("\(cal.component(.day, from: day))").font(.system(size: 14, weight: .bold))
+                                        .foregroundStyle(cal.isDateInToday(day) ? .white : .primary)
+                                        .frame(width: 22, height: 22)
+                                        .background(cal.isDateInToday(day) ? Theme.brand : .clear, in: Circle())
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            dayPillStack(day, compact: false)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .top)
+                    }
+                }
+                Text("Schicht tippen = ändern · Termin tippen = bearbeiten · Kopf = Tag.")
                     .font(.caption2).foregroundStyle(Theme.subtleText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        weekAgenda
         legend
-    }
-
-    private var weekGridHeader: some View {
-        HStack(spacing: 4) {
-            Text("").frame(width: 56)
-            ForEach(weekDays, id: \.self) { day in
-                Button { anchor = day; mode = .day } label: {
-                    VStack(spacing: 2) {
-                        Text(Format.weekdayShort(day)).font(.caption2).foregroundStyle(Theme.subtleText)
-                        Text("\(cal.component(.day, from: day))").font(.caption.bold())
-                            .foregroundStyle(cal.isDateInToday(day) ? .white : .primary)
-                            .frame(width: 24, height: 24)
-                            .background(cal.isDateInToday(day) ? Theme.brand : .clear, in: Circle())
-                    }
-                }
-                .buttonStyle(.plain)
-                .frame(maxWidth: .infinity)
-            }
-        }
-    }
-
-    private func weekGridRow(_ m: HouseholdMember) -> some View {
-        HStack(spacing: 4) {
-            VStack(spacing: 2) {
-                MemberAvatar(member: m, size: 28)
-                Text(firstName(m)).font(.caption2).lineLimit(1)
-            }
-            .frame(width: 56)
-            ForEach(weekDays, id: \.self) { day in
-                weekCell(m, day)
-                    .frame(maxWidth: .infinity)
-                    .onTapGesture { selectedCell = CellSelection(member: m, day: day) }
-            }
-        }
-    }
-
-    private func weekCell(_ m: HouseholdMember, _ day: Date) -> some View {
-        let type = shiftType(for: m.id, on: day)
-        let dayEvents = store.data.events.filter {
-            $0.memberIDs.contains(m.id) && cal.isDate($0.start, inSameDayAs: day)
-        }
-        return VStack(spacing: 2) {
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(type?.color.color ?? Theme.card)
-                .overlay(Text(type?.abbreviation ?? "–").font(.caption2.bold())
-                    .foregroundStyle(type == nil ? Theme.subtleText : .white))
-                .frame(height: 32)
-            HStack(spacing: 2) {
-                ForEach(dayEvents.prefix(3)) { ev in
-                    Circle().fill(ev.category == .childcare ? Theme.warning : Theme.brand)
-                        .frame(width: 5, height: 5)
-                }
-            }
-            .frame(height: 6)
-        }
-    }
-
-    @ViewBuilder private var weekAgenda: some View {
-        if weekDays.allSatisfy({ events(on: $0).isEmpty && tasksDue(on: $0).isEmpty }) {
-            Card {
-                Text("Keine Termine oder Aufgaben diese Woche.")
-                    .font(.caption).foregroundStyle(Theme.subtleText)
-            }
-        } else {
-            Card {
-                VStack(alignment: .leading, spacing: Theme.Space.m) {
-                    SectionHeader(title: "Diese Woche eingetragen", systemImage: "list.bullet")
-                    ForEach(weekDays.filter { !events(on: $0).isEmpty || !tasksDue(on: $0).isEmpty }, id: \.self) { day in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("\(Format.weekdayShort(day)) \(cal.component(.day, from: day)).")
-                                .font(.caption.bold()).foregroundStyle(Theme.subtleText)
-                            ForEach(events(on: day)) { ev in
-                                Button { editingEvent = ev } label: {
-                                    HStack(spacing: 6) {
-                                        Text(Format.time(ev.start)).font(.caption2).monospacedDigit()
-                                            .foregroundStyle(Theme.subtleText)
-                                        Image(systemName: ev.category.systemImage).font(.caption2).foregroundStyle(Theme.brand)
-                                        Text(ev.title).font(.subheadline).foregroundStyle(.primary)
-                                        Spacer()
-                                        if isCareOpen(ev) { Text("offen").font(.caption2).foregroundStyle(Theme.warning) }
-                                    }
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            ForEach(tasksDue(on: day)) { t in
-                                HStack(spacing: 6) {
-                                    Image(systemName: "checklist").font(.caption2).foregroundStyle(Theme.subtleText)
-                                    Text(t.title).font(.subheadline)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
     // MARK: Monat
@@ -337,55 +331,36 @@ struct WeekView: View {
     }
 
     @ViewBuilder private var monthView: some View {
-        Card {
+        Card(padding: Theme.Space.m) {
             VStack(spacing: 6) {
                 HStack {
                     ForEach(["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"], id: \.self) {
                         Text($0).font(.caption2).foregroundStyle(Theme.subtleText).frame(maxWidth: .infinity)
                     }
                 }
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 4) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), alignment: .center, spacing: 4) {
                     ForEach(monthCells, id: \.self) { day in monthCell(day) }
                 }
-                HStack(spacing: 12) {
-                    Text("\(firstName(store.currentUser)): Dienst")
-                    HStack(spacing: 4) { Circle().fill(Theme.brand).frame(width: 6, height: 6); Text("Termin") }
-                    HStack(spacing: 4) { Circle().fill(Theme.warning).frame(width: 6, height: 6); Text("Betreuung") }
-                }
-                .font(.caption2).foregroundStyle(Theme.subtleText)
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+        legend
     }
 
     private func monthCell(_ day: Date) -> some View {
         let inMonth = cal.component(.month, from: day) == cal.component(.month, from: anchor)
-        let type = shiftType(for: store.currentUser.id, on: day)
-        let dayEvents = events(on: day)
         return Button { anchor = day; mode = .day } label: {
             VStack(spacing: 2) {
                 Text("\(cal.component(.day, from: day))")
-                    .font(.caption2.weight(.semibold))
+                    .font(.system(size: 10, weight: .bold))
                     .foregroundStyle(cal.isDateInToday(day) ? Theme.brand : .primary)
-                if let type {
-                    Text(type.abbreviation).font(.system(size: 9, weight: .bold)).foregroundStyle(.white)
-                        .padding(.horizontal, 4).padding(.vertical, 1)
-                        .background(type.color.color, in: Capsule())
-                } else {
-                    Text(" ").font(.system(size: 9))
-                }
-                HStack(spacing: 2) {
-                    ForEach(dayEvents.prefix(4)) { ev in
-                        Circle().fill(ev.category == .childcare ? Theme.warning : Theme.brand)
-                            .frame(width: 4, height: 4)
-                    }
-                }
-                .frame(height: 5)
+                    .frame(maxWidth: .infinity)
+                dayPillStack(day, compact: true, cap: 3, showTasks: false)
+                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 54)
+            .padding(3)
+            .frame(maxWidth: .infinity, minHeight: 62, alignment: .top)
             .background(Theme.card, in: RoundedRectangle(cornerRadius: 8))
-            .opacity(inMonth ? 1 : 0.38)
+            .opacity(inMonth ? 1 : 0.4)
             .overlay(RoundedRectangle(cornerRadius: 8)
                 .stroke(cal.isDateInToday(day) ? Theme.brand : .clear, lineWidth: 1.5))
         }
@@ -398,8 +373,17 @@ struct WeekView: View {
         Card {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 SectionHeader(title: "Legende", systemImage: "info.circle")
+                Text("Schichten (volle Farbe)").font(.caption).foregroundStyle(Theme.subtleText)
                 FlowLayoutSimple(items: store.data.shiftTypes) { t in
-                    Chip(text: "\(t.abbreviation) · \(t.name)", color: t.color.color)
+                    Text(t.name).font(.caption2.bold()).foregroundStyle(.white)
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(t.color.color, in: Capsule())
+                }
+                Text("Personen (Termine in dieser Farbe)").font(.caption).foregroundStyle(Theme.subtleText)
+                FlowLayoutSimple(items: store.data.members) { m in
+                    Text(firstName(m)).font(.caption2.bold()).foregroundStyle(m.color.color)
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(m.color.color.opacity(0.16), in: Capsule())
                 }
             }
         }

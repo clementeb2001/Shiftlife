@@ -11,7 +11,7 @@ extension AppStore {
         var anna = HouseholdMember(name: "Anna Berg", role: .shiftWorker, color: .blue, isCurrentUser: true)
         anna.isCurrentUser = true
         let jonas = HouseholdMember(name: "Jonas Berg", role: .partner, color: .green)
-        var mia = HouseholdMember(name: "Mia Berg", role: .child, color: .orange)
+        var mia = HouseholdMember(name: "Mia Berg", role: .child, color: .pink)
         mia.careInfo = "Grundschule Musterstadt"
         mia.pickups = [
             Pickup(weekday: 2, startMinutes: 15 * 60 + 30, responsibleID: nil, label: "Schule abholen"),      // Mo

@@ -64,6 +64,17 @@ extension AppStore {
             .sorted { $0.start < $1.start }
     }
 
+    /// Colour used for an event in the calendar = the associated person's colour
+    /// (child first, then partner, then me), so all activities with a person share
+    /// that person's colour.
+    func eventColor(_ ev: CalendarEvent) -> AppColor {
+        let ms = ev.memberIDs.compactMap { member($0) }
+        if let child = ms.first(where: { $0.role == .child }) { return child.color }
+        if let other = ms.first(where: { !$0.isCurrentUser }) { return other.color }
+        if let me = ms.first(where: { $0.isCurrentUser }) { return me.color }
+        return .slate
+    }
+
     /// Is an adult free to take responsibility for a slot? Considers blocking shifts
     /// (+ rest) and *other* events, deliberately excluding one event by id so an
     /// event's own responsible person isn't counted as busy by that same event.

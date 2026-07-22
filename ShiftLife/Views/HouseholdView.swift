@@ -82,7 +82,7 @@ struct EditMemberSheet: View {
 
                 Section("Farbe") {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 44))], spacing: 12) {
-                        ForEach(AppColor.allCases) { c in
+                        ForEach(AppColor.pickable) { c in
                             Circle().fill(c.color).frame(width: 34, height: 34)
                                 .overlay(Circle().stroke(.primary, lineWidth: color == c ? 3 : 0))
                                 .onTapGesture { color = c }

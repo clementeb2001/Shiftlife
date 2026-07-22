@@ -6,40 +6,62 @@ import SwiftUI
 /// Named palette so we never persist raw Color (which isn't Codable) and colours
 /// stay consistent across light/dark mode. Colour is never the ONLY information
 /// carrier in the UI (see design requirement) – it always pairs with a label/icon.
+/// One shared 16-colour palette for both shift types and people, so a shift
+/// colour never has to collide with a person's colour.
 enum AppColor: String, Codable, CaseIterable, Identifiable {
-    case blue, teal, green, orange, red, purple, pink, indigo, brown, gray
+    case blue, navy, indigo, purple, magenta, pink, rose, red
+    case orange, amber, brown, green, lime, teal, cyan, slate
+    // Legacy values kept so previously stored data still decodes.
+    case gray
 
     var id: String { rawValue }
 
     var color: Color {
         switch self {
-        case .blue:   return Color(red: 0.20, green: 0.48, blue: 0.90)
-        case .teal:   return Color(red: 0.13, green: 0.63, blue: 0.62)
-        case .green:  return Color(red: 0.20, green: 0.66, blue: 0.40)
-        case .orange: return Color(red: 0.94, green: 0.56, blue: 0.20)
-        case .red:    return Color(red: 0.86, green: 0.30, blue: 0.30)
-        case .purple: return Color(red: 0.55, green: 0.36, blue: 0.82)
-        case .pink:   return Color(red: 0.90, green: 0.40, blue: 0.62)
-        case .indigo: return Color(red: 0.32, green: 0.35, blue: 0.78)
-        case .brown:  return Color(red: 0.55, green: 0.44, blue: 0.33)
-        case .gray:   return Color(red: 0.50, green: 0.53, blue: 0.58)
+        case .blue:    return Color(red: 0.204, green: 0.471, blue: 0.902)
+        case .navy:    return Color(red: 0.169, green: 0.294, blue: 0.561)
+        case .indigo:  return Color(red: 0.322, green: 0.353, blue: 0.780)
+        case .purple:  return Color(red: 0.549, green: 0.361, blue: 0.820)
+        case .magenta: return Color(red: 0.722, green: 0.302, blue: 0.769)
+        case .pink:    return Color(red: 0.898, green: 0.345, blue: 0.624)
+        case .rose:    return Color(red: 0.878, green: 0.439, blue: 0.541)
+        case .red:     return Color(red: 0.878, green: 0.333, blue: 0.357)
+        case .orange:  return Color(red: 0.937, green: 0.561, blue: 0.200)
+        case .amber:   return Color(red: 0.878, green: 0.663, blue: 0.231)
+        case .brown:   return Color(red: 0.608, green: 0.420, blue: 0.290)
+        case .green:   return Color(red: 0.184, green: 0.627, blue: 0.376)
+        case .lime:    return Color(red: 0.482, green: 0.718, blue: 0.286)
+        case .teal:    return Color(red: 0.122, green: 0.631, blue: 0.620)
+        case .cyan:    return Color(red: 0.125, green: 0.682, blue: 0.753)
+        case .slate:   return Color(red: 0.392, green: 0.439, blue: 0.537)
+        case .gray:    return Color(red: 0.500, green: 0.530, blue: 0.580)
         }
     }
 
     var label: String {
         switch self {
         case .blue: return "Blau"
-        case .teal: return "Türkis"
-        case .green: return "Grün"
-        case .orange: return "Orange"
-        case .red: return "Rot"
-        case .purple: return "Violett"
-        case .pink: return "Rosa"
+        case .navy: return "Navy"
         case .indigo: return "Indigo"
+        case .purple: return "Violett"
+        case .magenta: return "Magenta"
+        case .pink: return "Rosa"
+        case .rose: return "Altrosa"
+        case .red: return "Rot"
+        case .orange: return "Orange"
+        case .amber: return "Bernstein"
         case .brown: return "Braun"
+        case .green: return "Grün"
+        case .lime: return "Limette"
+        case .teal: return "Türkis"
+        case .cyan: return "Cyan"
+        case .slate: return "Schiefer"
         case .gray: return "Grau"
         }
     }
+
+    /// Colours offered in pickers (legacy `.gray` hidden but still decodable).
+    static var pickable: [AppColor] { allCases.filter { $0 != .gray } }
 }
 
 // MARK: - Household & members
