@@ -12,6 +12,9 @@ struct QuickAddView: View {
                     NavigationLink { AddShiftQuick() } label: {
                         quickRow("Dienst eintragen", "briefcase.fill", .blue)
                     }
+                    NavigationLink { ImportDutyMailView() } label: {
+                        quickRow("Bereitschaft aus Mail", "envelope.badge.fill", .red)
+                    }
                     NavigationLink { AddEventView() } label: {
                         quickRow("Termin", "calendar", .teal)
                     }

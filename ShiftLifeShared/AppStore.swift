@@ -170,6 +170,69 @@ final class AppStore: ObservableObject {
         }
     }
 
+    /// The shift type used for on-call / Bereitschaft duties (by category, then
+    /// by the variable-time flag). Creates one on first use if none exists.
+    func onCallShiftType() -> ShiftType {
+        if let t = data.shiftTypes.first(where: { $0.counterCategory == .onCall }) { return t }
+        if let t = data.shiftTypes.first(where: { $0.hasVariableTime }) { return t }
+        let new = ShiftType(name: "Bereitschaft", abbreviation: "B", color: .red,
+                            startMinutes: 0, endMinutes: 0, restHours: 0,
+                            hasVariableTime: true, counterCategory: .onCall)
+        data.shiftTypes.append(new)
+        return new
+    }
+
+    /// Enters parsed duty blocks as on-call shifts for a member. Blocks up to 24h
+    /// become a single (possibly overnight) instance; longer ones are split per
+    /// day. Identical existing instances are skipped, so re-importing the same
+    /// mail does not duplicate. Returns the number of instances created.
+    @discardableResult
+    func importOnCallBlocks(_ blocks: [ShiftMailParser.DutyBlock], for memberID: UUID? = nil) -> Int {
+        guard !blocks.isEmpty else { return 0 }
+        let member = memberID ?? currentUser.id
+        let type = onCallShiftType()
+        let cal = Calendar.current
+        var created = 0
+
+        func minutes(_ d: Date) -> Int {
+            let c = cal.dateComponents([.hour, .minute], from: d)
+            return (c.hour ?? 0) * 60 + (c.minute ?? 0)
+        }
+
+        func addInstance(day: Date, startMin: Int, endMin: Int) {
+            let d = cal.startOfDay(for: day)
+            let exists = data.shiftInstances.contains {
+                $0.memberID == member && $0.shiftTypeID == type.id &&
+                cal.isDate($0.date, inSameDayAs: d) &&
+                $0.startMinutesOverride == startMin && $0.endMinutesOverride == endMin
+            }
+            if exists { return }
+            data.shiftInstances.append(
+                ShiftInstance(memberID: member, shiftTypeID: type.id, date: d,
+                              isManualOverride: true,
+                              startMinutesOverride: startMin, endMinutesOverride: endMin))
+            created += 1
+        }
+
+        for b in blocks {
+            let duration = b.end.timeIntervalSince(b.start)
+            if duration <= 24 * 3600 {
+                addInstance(day: b.start, startMin: minutes(b.start), endMin: minutes(b.end))
+            } else {
+                // Split a multi-day block into one instance per calendar day.
+                var dayStart = b.start
+                while dayStart < b.end {
+                    let nextMidnight = cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: dayStart))!
+                    let segEnd = min(nextMidnight, b.end)
+                    let endMin = (segEnd == nextMidnight) ? 0 : minutes(segEnd) // 0 → 24:00 == next midnight
+                    addInstance(day: dayStart, startMin: minutes(dayStart), endMin: endMin)
+                    dayStart = nextMidnight
+                }
+            }
+        }
+        return created
+    }
+
     /// Effective start/end minutes for an instance (individual override for
     /// variable-time shifts, otherwise the shift type's default).
     func effectiveMinutes(_ inst: ShiftInstance) -> (start: Int, end: Int) {
