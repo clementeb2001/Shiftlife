@@ -42,8 +42,18 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		174859BA1C434BDF8034D666 /* ShiftLife */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ShiftLife; sourceTree = "<group>"; };
 		AA0100000000000000000001 /* ShiftLifeShared */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ShiftLifeShared; sourceTree = "<group>"; };
-		AA0100000000000000000002 /* ShiftLifeWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ShiftLifeWidget; sourceTree = "<group>"; };
+		AA0100000000000000000002 /* ShiftLifeWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (AA0100000000000000000010 /* Exceptions */, ); explicitFileTypes = {}; explicitFolders = (); path = ShiftLifeWidget; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		AA0100000000000000000010 /* Exceptions */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AA0100000000000000000003 /* ShiftLifeWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		E79C928D037D4EC196D1F6EC /* Frameworks */ = {
