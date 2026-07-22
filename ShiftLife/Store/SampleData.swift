@@ -71,17 +71,31 @@ extension AppStore {
             category: .shared, visibility: .household,
             memberIDs: [anna.id, jonas.id]))
 
-        // Doctor appointment for Mia during a weekday afternoon – childcare.
+        // Doctor appointment for Mia – a parent must be there (coverable).
         events.append(CalendarEvent(
             title: "Arzttermin Mia", start: at(3, 15), end: at(3, 16),
             category: .childcare, visibility: .household,
-            memberIDs: [mia.id], responsibleMemberID: nil))
+            memberIDs: [mia.id], responsibleMemberID: nil,
+            childSupervision: .parentRequired))
 
-        // Parents' evening at school – conflicts if Anna has a late shift.
+        // Parents' evening at school – a child event needing one parent.
         events.append(CalendarEvent(
             title: "Elternabend Schule", start: at(2, 18), end: at(2, 20),
             category: .appointment, visibility: .household,
-            memberIDs: [anna.id, jonas.id]))
+            memberIDs: [mia.id], responsibleMemberID: nil,
+            childSupervision: .parentRequired))
+
+        // Football training – Mia goes on her own (no parent needed).
+        events.append(CalendarEvent(
+            title: "Fußballtraining Mia", start: at(4, 17), end: at(4, 18),
+            category: .appointment, visibility: .household,
+            memberIDs: [mia.id], childSupervision: .noParent))
+
+        // Sleepover at grandma's – purely informational.
+        events.append(CalendarEvent(
+            title: "Bei Oma übernachten (Mia)", start: at(5, 17), end: at(6, 10),
+            category: .appointment, visibility: .household,
+            memberIDs: [mia.id], childSupervision: .informational))
 
         var tasks: [TaskItem] = [
             TaskItem(title: "Großeinkauf erledigen", assigneeID: nil,

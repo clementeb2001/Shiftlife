@@ -13,7 +13,12 @@ struct AddEventView: View {
     @State private var responsibleID: UUID?
     @State private var notes: String
     @State private var colorOverride: AppColor?
+    @State private var childSupervision: ChildSupervision
     private let existingID: UUID?
+
+    private var childInvolved: Bool {
+        memberIDs.contains { store.member($0)?.role == .child }
+    }
 
     /// New event.
     init() {
@@ -27,6 +32,7 @@ struct AddEventView: View {
         _responsibleID = State(initialValue: nil)
         _notes = State(initialValue: "")
         _colorOverride = State(initialValue: nil)
+        _childSupervision = State(initialValue: .informational)
         existingID = nil
     }
 
@@ -41,6 +47,7 @@ struct AddEventView: View {
         _responsibleID = State(initialValue: nil)
         _notes = State(initialValue: "")
         _colorOverride = State(initialValue: nil)
+        _childSupervision = State(initialValue: .informational)
         existingID = nil
     }
 
@@ -55,6 +62,7 @@ struct AddEventView: View {
         _responsibleID = State(initialValue: existing.responsibleMemberID)
         _notes = State(initialValue: existing.notes)
         _colorOverride = State(initialValue: existing.colorOverride)
+        _childSupervision = State(initialValue: existing.childSupervision ?? (existing.category == .childcare ? .parentRequired : .informational))
         existingID = existing.id
     }
 
@@ -88,10 +96,14 @@ struct AddEventView: View {
                         .foregroundStyle(.primary)
                     }
                 }
-                if category == .childcare {
-                    Section("Verantwortlich für Betreuung") {
-                        Picker("Person", selection: $responsibleID) {
-                            Text("Noch offen").tag(UUID?.none)
+                if childInvolved || category == .childcare {
+                    Section("Kinder-Termin") {
+                        Picker("Betreuung", selection: $childSupervision) {
+                            ForEach(ChildSupervision.allCases) { Text($0.label).tag($0) }
+                        }
+                        Text(childSupervision.hint).font(.caption).foregroundStyle(Theme.subtleText)
+                        Picker("Begleitperson (optional)", selection: $responsibleID) {
+                            Text("Offen").tag(UUID?.none)
                             ForEach(store.data.members.filter { $0.role != .child }) { m in
                                 Text(m.name).tag(UUID?.some(m.id))
                             }
@@ -162,6 +174,7 @@ struct AddEventView: View {
         ev.responsibleMemberID = responsibleID
         ev.notes = notes
         ev.colorOverride = colorOverride
+        ev.childSupervision = childInvolved ? childSupervision : nil
         store.upsertEvent(ev)
         dismiss()
     }

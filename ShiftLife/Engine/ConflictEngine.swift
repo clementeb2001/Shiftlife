@@ -15,7 +15,34 @@ enum ConflictEngine {
         for ev in store.data.events {
             guard ev.end >= now, ev.start <= horizon else { continue }
 
-            // 1) Event collides with a shift of an involved member.
+            let involvesChild = ev.memberIDs.contains { store.member($0)?.role == .child }
+
+            // --- Child events: attendance is flexible, only supervision matters. ---
+            if involvesChild || ev.category == .childcare {
+                // Effective supervision: explicit, else childcare defaults to
+                // "parent required", other child events to "informational".
+                let supervision = ev.childSupervision ?? (ev.category == .childcare ? .parentRequired : .informational)
+                if supervision == .parentRequired {
+                    let respAvailable = ev.responsibleMemberID
+                        .map { store.isAdultAvailable($0, from: ev.start, to: ev.end, excluding: ev.id) } ?? false
+                    let anyAdultFree = adults.contains { store.isAdultAvailable($0.id, from: ev.start, to: ev.end, excluding: ev.id) }
+                    if !(respAvailable || anyAdultFree) && !adults.isEmpty {
+                        conflicts.append(Conflict(
+                            kind: .bothParentsWorking,
+                            severity: .high,
+                            title: "Betreuung nicht abgedeckt: \(ev.title)",
+                            detail: "Kein Elternteil kann bei „\(ev.title)“ dabei sein (\(dateLabel(ev.start))). Bitte klären.",
+                            date: ev.start,
+                            eventID: ev.id,
+                            memberIDs: adults.map { $0.id }))
+                    }
+                }
+                // .informational / .noParent never raise a conflict.
+                continue
+            }
+
+            // --- Normal events: the listed adults are expected to attend. ---
+            // 1) Event collides with an involved adult's shift.
             for memberID in ev.memberIDs {
                 guard let m = store.member(memberID), m.role != .child else { continue }
                 if let clash = shiftClash(store: store, memberID: memberID, start: ev.start, end: ev.end) {
@@ -30,7 +57,7 @@ enum ConflictEngine {
                 }
             }
 
-            // 2) Event directly after a night shift (within rest window) for an involved member.
+            // 2) Event directly after a night shift (within rest window).
             for memberID in ev.memberIDs {
                 guard let m = store.member(memberID), m.role != .child else { continue }
                 if afterNightShift(store: store, memberID: memberID, eventStart: ev.start) {
@@ -42,40 +69,6 @@ enum ConflictEngine {
                         date: ev.start,
                         eventID: ev.id,
                         memberIDs: [memberID]))
-                }
-            }
-
-            // 3) Childcare event with no available responsible adult.
-            let involvesChild = ev.memberIDs.contains { store.member($0)?.role == .child }
-            if ev.category == .childcare || involvesChild {
-                let hasResponsible: Bool = {
-                    if let resp = ev.responsibleMemberID {
-                        return store.isAdultAvailable(resp, from: ev.start, to: ev.end, excluding: ev.id)
-                    }
-                    return false
-                }()
-                if !hasResponsible {
-                    // Are BOTH adults busy at that time? -> stronger "bothParentsWorking".
-                    let availableAdults = adults.filter { store.isAdultAvailable($0.id, from: ev.start, to: ev.end, excluding: ev.id) }
-                    if availableAdults.isEmpty && adults.count >= 1 {
-                        conflicts.append(Conflict(
-                            kind: .bothParentsWorking,
-                            severity: .high,
-                            title: "Betreuung nicht abgedeckt: \(ev.title)",
-                            detail: "Alle Erwachsenen sind während „\(ev.title)“ eingeteilt (\(dateLabel(ev.start))). Bitte Betreuung klären.",
-                            date: ev.start,
-                            eventID: ev.id,
-                            memberIDs: adults.map { $0.id }))
-                    } else {
-                        conflicts.append(Conflict(
-                            kind: .childcareUncovered,
-                            severity: .medium,
-                            title: "Keine verantwortliche Person: \(ev.title)",
-                            detail: "„\(ev.title)“ hat noch keine zuständige Person (\(dateLabel(ev.start))).",
-                            date: ev.start,
-                            eventID: ev.id,
-                            memberIDs: availableAdults.map { $0.id }))
-                    }
                 }
             }
         }

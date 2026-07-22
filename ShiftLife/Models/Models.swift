@@ -269,6 +269,29 @@ enum EventCategory: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+/// For events involving a child: how much adult supervision they need.
+enum ChildSupervision: String, Codable, CaseIterable, Identifiable {
+    case informational   // nur informativ – Eltern sehen, was das Kind macht
+    case parentRequired  // ein Elternteil muss dabei sein
+    case noParent        // kein Elternteil nötig
+
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .informational: return "Nur informativ"
+        case .parentRequired: return "Ein Elternteil muss dabei sein"
+        case .noParent: return "Kein Elternteil nötig"
+        }
+    }
+    var hint: String {
+        switch self {
+        case .informational: return "Eltern sehen, was das Kind macht. Kein Konflikt."
+        case .parentRequired: return "Konflikt nur, wenn kein Elternteil kann."
+        case .noParent: return "Kein Konflikt."
+        }
+    }
+}
+
 struct CalendarEvent: Identifiable, Codable, Hashable {
     var id: UUID = UUID()
     var title: String
@@ -285,6 +308,8 @@ struct CalendarEvent: Identifiable, Codable, Hashable {
     /// Optional explicit calendar colour. When nil the colour is derived from the
     /// associated person (child → partner → me).
     var colorOverride: AppColor? = nil
+    /// For events that involve a child: how much adult supervision is required.
+    var childSupervision: ChildSupervision? = nil
     /// True when auto-generated from a child's recurring pickup schedule.
     var isGenerated: Bool = false
     /// The child this generated event belongs to (for clean regeneration).
