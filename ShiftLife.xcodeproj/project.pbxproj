@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AA010000000000000000000F /* ShiftLifeWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000004 /* ShiftLifeWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BB010000000000000000000F /* ShiftLifeShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BB0100000000000000000004 /* ShiftLifeShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -17,6 +18,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = AA0100000000000000000003;
 			remoteInfo = ShiftLifeWidgetExtension;
+		};
+		BB010000000000000000000D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AC67948656354BEBAA3F9B57 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BB0100000000000000000003;
+			remoteInfo = ShiftLifeShareExtension;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -28,6 +36,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				AA010000000000000000000F /* ShiftLifeWidgetExtension.appex in Embed Foundation Extensions */,
+				BB010000000000000000000F /* ShiftLifeShareExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -37,12 +46,14 @@
 /* Begin PBXFileReference section */
 		E656738E64924DD883601955 /* ShiftLife.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShiftLife.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA0100000000000000000004 /* ShiftLifeWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShiftLifeWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB0100000000000000000004 /* ShiftLifeShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShiftLifeShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		174859BA1C434BDF8034D666 /* ShiftLife */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ShiftLife; sourceTree = "<group>"; };
 		AA0100000000000000000001 /* ShiftLifeShared */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ShiftLifeShared; sourceTree = "<group>"; };
 		AA0100000000000000000002 /* ShiftLifeWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (AA0100000000000000000010 /* Exceptions */, ); explicitFileTypes = {}; explicitFolders = (); path = ShiftLifeWidget; sourceTree = "<group>"; };
+		BB0100000000000000000002 /* ShiftLifeShareExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (BB0100000000000000000010 /* Exceptions */, ); explicitFileTypes = {}; explicitFolders = (); path = ShiftLifeShareExtension; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -52,6 +63,13 @@
 				Info.plist,
 			);
 			target = AA0100000000000000000003 /* ShiftLifeWidgetExtension */;
+		};
+		BB0100000000000000000010 /* Exceptions */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = BB0100000000000000000003 /* ShiftLifeShareExtension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -70,6 +88,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BB0100000000000000000006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -79,6 +104,7 @@
 				174859BA1C434BDF8034D666 /* ShiftLife */,
 				AA0100000000000000000001 /* ShiftLifeShared */,
 				AA0100000000000000000002 /* ShiftLifeWidget */,
+				BB0100000000000000000002 /* ShiftLifeShareExtension */,
 				5BE5421B4DAB401C92C0D561 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,6 +114,7 @@
 			children = (
 				E656738E64924DD883601955 /* ShiftLife.app */,
 				AA0100000000000000000004 /* ShiftLifeWidgetExtension.appex */,
+				BB0100000000000000000004 /* ShiftLifeShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -108,6 +135,7 @@
 			);
 			dependencies = (
 				AA010000000000000000000C /* PBXTargetDependency */,
+				BB010000000000000000000C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				174859BA1C434BDF8034D666 /* ShiftLife */,
@@ -139,6 +167,27 @@
 			productReference = AA0100000000000000000004 /* ShiftLifeWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		BB0100000000000000000003 /* ShiftLifeShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB0100000000000000000008 /* Build configuration list for PBXNativeTarget "ShiftLifeShareExtension" */;
+			buildPhases = (
+				BB0100000000000000000005 /* Sources */,
+				BB0100000000000000000006 /* Frameworks */,
+				BB0100000000000000000007 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AA0100000000000000000001 /* ShiftLifeShared */,
+				BB0100000000000000000002 /* ShiftLifeShareExtension */,
+			);
+			name = ShiftLifeShareExtension;
+			productName = ShiftLifeShareExtension;
+			productReference = BB0100000000000000000004 /* ShiftLifeShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -153,6 +202,9 @@
 						CreatedOnToolsVersion = 16.0;
 					};
 					AA0100000000000000000003 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					BB0100000000000000000003 = {
 						CreatedOnToolsVersion = 16.0;
 					};
 				};
@@ -174,6 +226,7 @@
 			targets = (
 				4A199EB656A64787A1449500 /* ShiftLife */,
 				AA0100000000000000000003 /* ShiftLifeWidgetExtension */,
+				BB0100000000000000000003 /* ShiftLifeShareExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -187,6 +240,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AA0100000000000000000007 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB0100000000000000000007 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -210,6 +270,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BB0100000000000000000005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -217,6 +284,11 @@
 			isa = PBXTargetDependency;
 			target = AA0100000000000000000003 /* ShiftLifeWidgetExtension */;
 			targetProxy = AA010000000000000000000D /* PBXContainerItemProxy */;
+		};
+		BB010000000000000000000C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BB0100000000000000000003 /* ShiftLifeShareExtension */;
+			targetProxy = BB010000000000000000000D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -454,6 +526,60 @@
 			};
 			name = Release;
 		};
+		BB0100000000000000000009 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ShiftLifeShareExtension/ShiftLifeShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ShiftLifeShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShiftLife;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.shiftlife.app.share;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BB010000000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ShiftLifeShareExtension/ShiftLifeShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ShiftLifeShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShiftLife;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.shiftlife.app.share;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -480,6 +606,15 @@
 			buildConfigurations = (
 				AA0100000000000000000009 /* Debug */,
 				AA010000000000000000000A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BB0100000000000000000008 /* Build configuration list for PBXNativeTarget "ShiftLifeShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB0100000000000000000009 /* Debug */,
+				BB010000000000000000000A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
