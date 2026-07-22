@@ -282,6 +282,9 @@ struct CalendarEvent: Identifiable, Codable, Hashable {
     /// Optional responsible person for a childcare/pickup event.
     var responsibleMemberID: UUID? = nil
     var notes: String = ""
+    /// Optional explicit calendar colour. When nil the colour is derived from the
+    /// associated person (child → partner → me).
+    var colorOverride: AppColor? = nil
     /// True when auto-generated from a child's recurring pickup schedule.
     var isGenerated: Bool = false
     /// The child this generated event belongs to (for clean regeneration).

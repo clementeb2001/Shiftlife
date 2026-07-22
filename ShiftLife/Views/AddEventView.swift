@@ -12,6 +12,7 @@ struct AddEventView: View {
     @State private var memberIDs: Set<UUID>
     @State private var responsibleID: UUID?
     @State private var notes: String
+    @State private var colorOverride: AppColor?
     private let existingID: UUID?
 
     /// New event.
@@ -25,6 +26,7 @@ struct AddEventView: View {
         _memberIDs = State(initialValue: [])
         _responsibleID = State(initialValue: nil)
         _notes = State(initialValue: "")
+        _colorOverride = State(initialValue: nil)
         existingID = nil
     }
 
@@ -38,6 +40,7 @@ struct AddEventView: View {
         _memberIDs = State(initialValue: Set(window.memberIDs))
         _responsibleID = State(initialValue: nil)
         _notes = State(initialValue: "")
+        _colorOverride = State(initialValue: nil)
         existingID = nil
     }
 
@@ -51,6 +54,7 @@ struct AddEventView: View {
         _memberIDs = State(initialValue: Set(existing.memberIDs))
         _responsibleID = State(initialValue: existing.responsibleMemberID)
         _notes = State(initialValue: existing.notes)
+        _colorOverride = State(initialValue: existing.colorOverride)
         existingID = existing.id
     }
 
@@ -94,6 +98,25 @@ struct AddEventView: View {
                         }
                     }
                 }
+                Section("Farbe des Termins") {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 44))], spacing: 12) {
+                        Button { colorOverride = nil } label: {
+                            Text("Auto").font(.system(size: 9, weight: .bold)).foregroundStyle(.primary)
+                                .frame(width: 34, height: 34)
+                                .background(Theme.card, in: Circle())
+                                .overlay(Circle().stroke(colorOverride == nil ? Color.primary : .clear, lineWidth: 3))
+                        }
+                        .buttonStyle(.plain)
+                        ForEach(AppColor.pickable) { c in
+                            Circle().fill(c.color).frame(width: 34, height: 34)
+                                .overlay(Circle().stroke(colorOverride == c ? Color.primary : .clear, lineWidth: 3))
+                                .onTapGesture { colorOverride = c }
+                                .accessibilityLabel(c.label)
+                        }
+                    }
+                    Text("„Auto“ nutzt die Farbe der beteiligten Person (Kind, sonst Partner, sonst du).")
+                        .font(.caption).foregroundStyle(Theme.subtleText)
+                }
                 Section("Sichtbarkeit") {
                     Picker("Freigabe", selection: $visibility) {
                         ForEach(Visibility.allCases) { Label($0.label, systemImage: $0.systemImage).tag($0) }
@@ -126,11 +149,19 @@ struct AddEventView: View {
 
     private func save() {
         if end <= start { end = start.addingTimeInterval(3600) }
-        let ev = CalendarEvent(
-            id: existingID ?? UUID(),
-            title: title.trimmingCharacters(in: .whitespaces),
-            start: start, end: end, category: category, visibility: visibility,
-            memberIDs: Array(memberIDs), responsibleMemberID: responsibleID, notes: notes)
+        // Start from the existing event (preserving generated/pickup metadata) or a new one.
+        var ev = existingID.flatMap { id in store.data.events.first(where: { $0.id == id }) }
+            ?? CalendarEvent(title: "", start: start, end: end, category: category,
+                             visibility: visibility, memberIDs: [])
+        ev.title = title.trimmingCharacters(in: .whitespaces)
+        ev.start = start
+        ev.end = end
+        ev.category = category
+        ev.visibility = visibility
+        ev.memberIDs = Array(memberIDs)
+        ev.responsibleMemberID = responsibleID
+        ev.notes = notes
+        ev.colorOverride = colorOverride
         store.upsertEvent(ev)
         dismiss()
     }

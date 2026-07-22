@@ -216,14 +216,6 @@ struct WeekView: View {
 
     // MARK: Pills
 
-    private func adultsWithShift(on day: Date) -> [HouseholdMember] {
-        store.data.members.filter { $0.role != .child && shiftType(for: $0.id, on: day) != nil }
-    }
-
-    private func openTasks(on day: Date) -> [TaskItem] {
-        store.data.tasks.filter { !$0.isDone && ($0.dueDate.map { cal.isDate($0, inSameDayAs: day) } ?? false) }
-    }
-
     private func shiftPill(_ m: HouseholdMember, _ t: ShiftType, day: Date, compact: Bool, full: Bool) -> some View {
         Text(compact ? t.abbreviation : t.name)
             .font(.system(size: compact ? 8.5 : 10, weight: .bold))
@@ -253,33 +245,18 @@ struct WeekView: View {
             .onTapGesture { editingEvent = ev }
     }
 
-    private func taskPill(_ t: TaskItem, compact: Bool) -> some View {
-        Text("✓ \(t.title)")
-            .font(.system(size: compact ? 8 : 10, weight: .semibold))
-            .foregroundStyle(Theme.subtleText)
-            .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 4).padding(.vertical, compact ? 2 : 3)
-            .background(Theme.card, in: RoundedRectangle(cornerRadius: compact ? 4 : 6))
-    }
-
-    /// Vertical stack of pills for a day: shifts (solid) fill when nothing else,
-    /// then events (person colour) and tasks. `cap` limits events in month cells.
-    private func dayPillStack(_ day: Date, compact: Bool, cap: Int? = nil, showTasks: Bool = true) -> some View {
-        let shiftMembers = adultsWithShift(on: day)
+    /// Month cell stack: the current user's shift (their own shift colours) plus
+    /// person-coloured event pills (capped). Used only by the month grid.
+    private func monthDayStack(_ day: Date) -> some View {
+        let user = store.currentUser
+        let userShift = shiftType(for: user.id, on: day)
         let evs = events(on: day)
-        let tks = showTasks ? openTasks(on: day) : []
-        let full = evs.isEmpty && tks.isEmpty
-        let shownEvs = cap.map { Array(evs.prefix($0)) } ?? evs
-        let overflow = cap.map { max(0, evs.count - $0) } ?? 0
-        return VStack(spacing: compact ? 2 : 4) {
-            ForEach(shiftMembers) { m in
-                if let t = shiftType(for: m.id, on: day) {
-                    shiftPill(m, t, day: day, compact: compact, full: full)
-                }
-            }
-            ForEach(shownEvs) { ev in eventPill(ev, compact: compact) }
-            ForEach(tks) { t in taskPill(t, compact: compact) }
+        let full = evs.isEmpty && userShift != nil
+        let shownEvs = Array(evs.prefix(3))
+        let overflow = max(0, evs.count - 3)
+        return VStack(spacing: 2) {
+            if let t = userShift { shiftPill(user, t, day: day, compact: true, full: full) }
+            ForEach(shownEvs) { ev in eventPill(ev, compact: true) }
             if overflow > 0 {
                 Text("+\(overflow)").font(.system(size: 8, weight: .bold))
                     .foregroundStyle(Theme.subtleText).frame(maxWidth: .infinity)
@@ -287,31 +264,60 @@ struct WeekView: View {
         }
     }
 
-    // MARK: Woche
+    /// One member's cell for a day (per-person week): their shift fills it, their
+    /// events (and childcare they're responsible for) stack below in person colour.
+    private func memberDayCell(_ m: HouseholdMember, _ day: Date) -> some View {
+        let t = shiftType(for: m.id, on: day)
+        let evs = store.data.events
+            .filter { ($0.memberIDs.contains(m.id) || $0.responsibleMemberID == m.id) && cal.isDate($0.start, inSameDayAs: day) }
+            .sorted { $0.start < $1.start }
+        let full = evs.isEmpty && t != nil
+        return VStack(spacing: 3) {
+            if let t { shiftPill(m, t, day: day, compact: true, full: full) }
+            ForEach(evs) { ev in eventPill(ev, compact: true) }
+            if t == nil && evs.isEmpty {
+                Text("·").font(.caption2).foregroundStyle(Theme.subtleText).frame(maxWidth: .infinity)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .top)
+    }
+
+    private func dayHeader(_ day: Date) -> some View {
+        Button { anchor = day; mode = .day } label: {
+            VStack(spacing: 1) {
+                Text(Format.weekdayShort(day)).font(.system(size: 9, weight: .bold)).foregroundStyle(Theme.subtleText)
+                Text("\(cal.component(.day, from: day))").font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(cal.isDateInToday(day) ? .white : .primary)
+                    .frame(width: 20, height: 20)
+                    .background(cal.isDateInToday(day) ? Theme.brand : .clear, in: Circle())
+            }
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: Woche (pro Person)
 
     @ViewBuilder private var weekView: some View {
         Card(padding: Theme.Space.m) {
             VStack(spacing: 6) {
-                HStack(alignment: .top, spacing: 5) {
-                    ForEach(weekDays, id: \.self) { day in
-                        VStack(spacing: 5) {
-                            Button { anchor = day; mode = .day } label: {
-                                VStack(spacing: 1) {
-                                    Text(Format.weekdayShort(day)).font(.system(size: 9, weight: .bold))
-                                        .foregroundStyle(Theme.subtleText)
-                                    Text("\(cal.component(.day, from: day))").font(.system(size: 14, weight: .bold))
-                                        .foregroundStyle(cal.isDateInToday(day) ? .white : .primary)
-                                        .frame(width: 22, height: 22)
-                                        .background(cal.isDateInToday(day) ? Theme.brand : .clear, in: Circle())
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            dayPillStack(day, compact: false)
+                HStack(alignment: .bottom, spacing: 4) {
+                    Color.clear.frame(width: 46, height: 1)
+                    ForEach(weekDays, id: \.self) { day in dayHeader(day) }
+                }
+                Divider()
+                ForEach(store.data.members) { m in
+                    HStack(alignment: .top, spacing: 4) {
+                        VStack(spacing: 2) {
+                            MemberAvatar(member: m, size: 24)
+                            Text(firstName(m)).font(.system(size: 8, weight: .medium)).lineLimit(1)
+                                .foregroundStyle(Theme.subtleText)
                         }
-                        .frame(maxWidth: .infinity, alignment: .top)
+                        .frame(width: 46)
+                        ForEach(weekDays, id: \.self) { day in memberDayCell(m, day) }
                     }
                 }
-                Text("Schicht tippen = ändern · Termin tippen = bearbeiten · Kopf = Tag.")
+                Text("Schicht tippen = ändern · Termin tippen = bearbeiten · Datum = Tag.")
                     .font(.caption2).foregroundStyle(Theme.subtleText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -354,7 +360,7 @@ struct WeekView: View {
                     .font(.system(size: 10, weight: .bold))
                     .foregroundStyle(cal.isDateInToday(day) ? Theme.brand : .primary)
                     .frame(maxWidth: .infinity)
-                dayPillStack(day, compact: true, cap: 3, showTasks: false)
+                monthDayStack(day)
                 Spacer(minLength: 0)
             }
             .padding(3)

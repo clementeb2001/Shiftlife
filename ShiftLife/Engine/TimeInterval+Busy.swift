@@ -68,6 +68,7 @@ extension AppStore {
     /// (child first, then partner, then me), so all activities with a person share
     /// that person's colour.
     func eventColor(_ ev: CalendarEvent) -> AppColor {
+        if let c = ev.colorOverride { return c }
         let ms = ev.memberIDs.compactMap { member($0) }
         if let child = ms.first(where: { $0.role == .child }) { return child.color }
         if let other = ms.first(where: { !$0.isCurrentUser }) { return other.color }
