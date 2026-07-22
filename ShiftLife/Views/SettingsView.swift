@@ -26,11 +26,13 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Datenschutz & Daten") {
+            Section {
                 Button { showExport = true } label: { Label("Daten exportieren", systemImage: "square.and.arrow.up") }
                 Button(role: .destructive) { showDeleteConfirm = true } label: {
                     Label("Alle Daten löschen", systemImage: "trash")
                 }
+            } header: {
+                Text("Datenschutz & Daten")
             } footer: {
                 Text("Datensparsamkeit: Es werden nur Planungsdaten gespeichert – keine dienstlichen Inhalte. Alles bleibt lokal auf dem Gerät.")
             }
