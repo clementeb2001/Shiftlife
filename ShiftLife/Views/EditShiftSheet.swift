@@ -104,7 +104,7 @@ struct EditShiftSheet: View {
             } header: {
                 Text("\(type.name) – individuelle Zeit")
             } footer: {
-                Text("Zeitspanne für genau diesen Tag. Endet der Dienst am nächsten Tag (über Nacht), „Bis" einfach vor „Von" wählen.")
+                Text("Zeitspanne für genau diesen Tag. Endet der Dienst am nächsten Tag (über Nacht), Bis-Zeit einfach vor der Von-Zeit wählen.")
             }
             Section {
                 Button {
