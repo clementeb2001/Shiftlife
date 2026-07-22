@@ -11,7 +11,7 @@ struct RootView: View {
                 .tabItem { Label("Heute", systemImage: "sun.max.fill") }
 
             WeekView()
-                .tabItem { Label("Woche", systemImage: "calendar") }
+                .tabItem { Label("Kalender", systemImage: "calendar") }
 
             CommonTimeView()
                 .tabItem { Label("Gemeinsam", systemImage: "person.2.fill") }

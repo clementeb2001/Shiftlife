@@ -20,6 +20,16 @@ struct SettingsView: View {
                 NavigationLink { ShiftTypesView() } label: { Label("Schichtarten & Muster", systemImage: "square.stack.3d.up.fill") }
             }
 
+            Section {
+                ShareLink(item: CalendarExport.writeICSFile(store: store)) {
+                    Label("In Kalender exportieren (.ics)", systemImage: "calendar.badge.plus")
+                }
+            } header: {
+                Text("Kalender")
+            } footer: {
+                Text("Dienste & Termine der nächsten 8 Wochen als .ics – in Apple oder Google Kalender importierbar.")
+            }
+
             Section("Planung") {
                 Toggle(isOn: $store.data.considerRestAfterNight) {
                     Label("Ruhezeit nach Nachtdienst berücksichtigen", systemImage: "moon.zzz.fill")
