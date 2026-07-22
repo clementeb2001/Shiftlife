@@ -122,19 +122,18 @@ struct OnboardingView: View {
 
     private var invite: some View {
         VStack(alignment: .leading, spacing: Theme.Space.l) {
-            Text("Partner einladen").font(.title.bold()).padding(.top, Theme.Space.xxl)
-            Text("Teile diesen Code, um Partner:in oder Familie mit deinem Haushalt zu verbinden. (In dieser lokalen Vorschau werden Beispielpersonen genutzt.)")
+            Text("Deine Personen").font(.title.bold()).padding(.top, Theme.Space.xxl)
+            Text("Lege Partner:in, Kinder oder weitere Personen als lokale Profile an. Nur so erkennt ShiftLife eure gemeinsame freie Zeit und Betreuungslücken. Alles bleibt auf diesem Gerät.")
                 .foregroundStyle(Theme.subtleText)
 
             Card {
-                VStack(spacing: Theme.Space.s) {
-                    Text("Einladungscode").font(.caption).foregroundStyle(Theme.subtleText)
-                    Text(store.data.household.inviteCode)
-                        .font(.system(.largeTitle, design: .monospaced).weight(.bold))
-                        .tracking(4)
-                    Chip(text: "Haushalt: \(store.data.household.name)", systemImage: "house.fill")
+                VStack(alignment: .leading, spacing: Theme.Space.s) {
+                    Label("Beispiel-Familie ist bereits angelegt", systemImage: "person.2.fill")
+                        .font(.subheadline).fontWeight(.semibold)
+                    Text("Du kannst Personen jederzeit unter „Meine Personen“ ergänzen oder ändern.")
+                        .font(.caption).foregroundStyle(Theme.subtleText)
                 }
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             Spacer()
@@ -142,12 +141,6 @@ struct OnboardingView: View {
                 applyOnboarding()
             }
             .buttonStyle(PrimaryButtonStyle())
-
-            Button("Ohne Einladung fortfahren") {
-                applyOnboarding()
-            }
-            .frame(maxWidth: .infinity)
-            .foregroundStyle(Theme.subtleText)
         }
         .padding(Theme.Space.xl)
     }

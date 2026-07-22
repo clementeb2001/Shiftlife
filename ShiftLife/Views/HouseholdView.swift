@@ -7,23 +7,6 @@ struct HouseholdView: View {
 
     var body: some View {
         List {
-            Section("Haushalt") {
-                HStack {
-                    Image(systemName: "house.fill").foregroundStyle(Theme.brand)
-                    Text(store.data.household.name)
-                    Spacer()
-                }
-                HStack {
-                    Text("Einladungscode")
-                    Spacer()
-                    Text(store.data.household.inviteCode)
-                        .font(.system(.body, design: .monospaced).weight(.semibold))
-                        .foregroundStyle(Theme.brand)
-                }
-            } footer: {
-                Text("Teile den Code, um Partner:in oder Familie zu verbinden. (Lokale Vorschau – echte Synchronisierung ist ein späterer Backend-Schritt.)")
-            }
-
             Section("Personen") {
                 ForEach(store.data.members) { m in
                     Button { editing = m } label: {
@@ -41,9 +24,11 @@ struct HouseholdView: View {
                 .onDelete { idx in idx.map { store.data.members[$0] }.forEach(store.deleteMember) }
 
                 Button { showAdd = true } label: { Label("Person hinzufügen", systemImage: "person.badge.plus") }
+            } footer: {
+                Text("Lege Partner:in, Kinder oder weitere Personen als lokale Profile an. Nur so kann ShiftLife eure gemeinsame freie Zeit und Betreuungslücken erkennen. Alles bleibt lokal auf diesem Gerät.")
             }
         }
-        .navigationTitle("Haushalt")
+        .navigationTitle("Meine Personen")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $editing) { EditMemberSheet(member: $0) }
         .sheet(isPresented: $showAdd) { EditMemberSheet(member: nil) }

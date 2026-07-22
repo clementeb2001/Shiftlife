@@ -4,11 +4,10 @@ struct SettingsView: View {
     @EnvironmentObject var store: AppStore
     @State private var showExport = false
     @State private var showDeleteConfirm = false
-    @State private var showPaywall = false
 
     var body: some View {
         List {
-            Section("Konto") {
+            Section("Profil") {
                 HStack {
                     MemberAvatar(member: store.currentUser, size: 40)
                     VStack(alignment: .leading) {
@@ -16,19 +15,9 @@ struct SettingsView: View {
                         Text(store.currentUser.role.label).font(.caption).foregroundStyle(Theme.subtleText)
                     }
                 }
-                NavigationLink { HouseholdView() } label: { Label("Haushalt & Personen", systemImage: "house.fill") }
+                NavigationLink { StatisticsView() } label: { Label("Meine Statistik", systemImage: "chart.bar.fill") }
+                NavigationLink { HouseholdView() } label: { Label("Meine Personen", systemImage: "person.2.fill") }
                 NavigationLink { ShiftTypesView() } label: { Label("Schichtarten & Muster", systemImage: "square.stack.3d.up.fill") }
-            }
-
-            Section("Abo") {
-                HStack {
-                    Label(store.data.isPremium ? "Premium Familie aktiv" : "Kostenlose Version",
-                          systemImage: store.data.isPremium ? "checkmark.seal.fill" : "star")
-                        .foregroundStyle(store.data.isPremium ? Theme.success : .primary)
-                    Spacer()
-                    Button(store.data.isPremium ? "Verwalten" : "Upgrade") { showPaywall = true }
-                        .buttonStyle(.borderedProminent).controlSize(.small)
-                }
             }
 
             Section("Planung") {
@@ -47,14 +36,13 @@ struct SettingsView: View {
             }
 
             Section {
-                Text("ShiftLife MVP · lokale Vorschau")
+                Text("ShiftLife · persönliche iOS-App · lokal auf diesem Gerät")
                     .font(.caption).foregroundStyle(Theme.subtleText)
             }
         }
         .navigationTitle("Einstellungen")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showExport) { ExportView(json: store.exportJSON()) }
-        .sheet(isPresented: $showPaywall) { PaywallView() }
         .alert("Alle Daten löschen?", isPresented: $showDeleteConfirm) {
             Button("Löschen", role: .destructive) { store.deleteAllData() }
             Button("Abbrechen", role: .cancel) {}

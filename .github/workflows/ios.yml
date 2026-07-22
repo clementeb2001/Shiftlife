@@ -1,0 +1,48 @@
+name: iOS Build
+
+# Baut die ShiftLife-App in Apples Cloud (macOS-Runner), damit wir ohne eigenen
+# Mac sehen, dass der Swift-Code sauber kompiliert. Läuft bei jedem Push auf den
+# Feature-Branch und kann manuell über "Run workflow" gestartet werden.
+on:
+  push:
+    branches:
+      - claude/ios-app-development-88wtpb
+    paths:
+      - 'ShiftLife/**'
+      - 'ShiftLife.xcodeproj/**'
+      - 'Tests/**'
+      - '.github/workflows/ios.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (iOS Simulator)
+    runs-on: macos-15
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode & SDK
+        run: |
+          xcodebuild -version
+          echo "--- available iOS simulator runtimes ---"
+          xcrun simctl list runtimes | grep -i ios || true
+
+      - name: List project schemes
+        run: xcodebuild -list -project ShiftLife.xcodeproj
+
+      - name: Build for iOS Simulator (no code signing)
+        run: |
+          xcodebuild \
+            -project ShiftLife.xcodeproj \
+            -scheme ShiftLife \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            clean build
+
+      - name: Build succeeded
+        run: echo "✅ ShiftLife kompiliert erfolgreich für iOS."

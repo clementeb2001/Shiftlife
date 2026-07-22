@@ -27,7 +27,7 @@ struct QuickAddView: View {
                         quickRow("Schichtarten & Muster", "square.stack.3d.up.fill", .purple)
                     }
                     NavigationLink { HouseholdView() } label: {
-                        quickRow("Haushalt & Personen", "house.fill", .indigo)
+                        quickRow("Meine Personen", "person.2.fill", .indigo)
                     }
                 }
             }
