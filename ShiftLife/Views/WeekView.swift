@@ -4,6 +4,7 @@ import SwiftUI
 /// not just shifts: shifts, appointments, childcare and due tasks all show up.
 struct WeekView: View {
     @EnvironmentObject var store: AppStore
+    @Environment(\.colorScheme) private var colorScheme
     private let cal = Calendar.current
 
     enum Mode: String, CaseIterable, Identifiable {
@@ -232,14 +233,14 @@ struct WeekView: View {
     }
 
     private func eventPill(_ ev: CalendarEvent, compact: Bool) -> some View {
-        let c = store.eventColor(ev).color
+        let appColor = store.eventColor(ev)
         return Text(ev.title)
             .font(.system(size: compact ? 8 : 10, weight: .semibold))
-            .foregroundStyle(c)
+            .foregroundStyle(appColor.readableText(colorScheme))
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 4).padding(.vertical, compact ? 2 : 3)
-            .background(c.opacity(0.16), in: RoundedRectangle(cornerRadius: compact ? 4 : 6))
+            .background(appColor.color.opacity(0.16), in: RoundedRectangle(cornerRadius: compact ? 4 : 6))
             .overlay(RoundedRectangle(cornerRadius: compact ? 4 : 6)
                 .stroke(Theme.warning, lineWidth: isCareOpen(ev) ? 1.5 : 0))
             .contentShape(Rectangle())
@@ -388,7 +389,7 @@ struct WeekView: View {
                 }
                 Text("Personen (Termine in dieser Farbe)").font(.caption).foregroundStyle(Theme.subtleText)
                 FlowLayoutSimple(items: store.data.members) { m in
-                    Text(firstName(m)).font(.caption2.bold()).foregroundStyle(m.color.color)
+                    Text(firstName(m)).font(.caption2.bold()).foregroundStyle(m.color.readableText(colorScheme))
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(m.color.color.opacity(0.16), in: Capsule())
                 }

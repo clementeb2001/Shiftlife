@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Small design system: colours, typography, spacing and reusable components.
 /// Requirements honoured: modern/calm/trustworthy, Light + Dark mode, colour is
@@ -53,10 +54,27 @@ struct Card<Content: View>: View {
 
 /// A small labelled chip. Colour + text/icon so colour is never the only cue.
 struct Chip: View {
+    @Environment(\.colorScheme) private var scheme
     var text: String
     var systemImage: String? = nil
     var color: Color = Theme.brand
     var filled: Bool = false
+
+    /// Readable text colour on the 15% tint background: darkened in light mode,
+    /// lightened in dark mode, so even light hues stay legible.
+    private var textColor: Color {
+        if filled { return .white }
+        return Chip.readable(color, scheme)
+    }
+
+    static func readable(_ color: Color, _ scheme: ColorScheme) -> Color {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(color).getRed(&r, green: &g, blue: &b, alpha: &a)
+        if scheme == .dark {
+            return Color(red: r * 0.55 + 0.45, green: g * 0.55 + 0.45, blue: b * 0.55 + 0.45)
+        }
+        return Color(red: r * 0.6, green: g * 0.6, blue: b * 0.6)
+    }
 
     var body: some View {
         HStack(spacing: 4) {
@@ -65,7 +83,7 @@ struct Chip: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .foregroundStyle(filled ? Color.white : color)
+        .foregroundStyle(textColor)
         .background(filled ? color : color.opacity(0.15))
         .clipShape(Capsule())
     }

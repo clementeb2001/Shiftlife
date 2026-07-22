@@ -16,25 +16,40 @@ enum AppColor: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var color: Color {
+    /// Base RGB (0…1) for the colour.
+    var rgb: (r: Double, g: Double, b: Double) {
         switch self {
-        case .blue:    return Color(red: 0.204, green: 0.471, blue: 0.902)
-        case .navy:    return Color(red: 0.169, green: 0.294, blue: 0.561)
-        case .indigo:  return Color(red: 0.322, green: 0.353, blue: 0.780)
-        case .purple:  return Color(red: 0.549, green: 0.361, blue: 0.820)
-        case .magenta: return Color(red: 0.722, green: 0.302, blue: 0.769)
-        case .pink:    return Color(red: 0.898, green: 0.345, blue: 0.624)
-        case .rose:    return Color(red: 0.878, green: 0.439, blue: 0.541)
-        case .red:     return Color(red: 0.878, green: 0.333, blue: 0.357)
-        case .orange:  return Color(red: 0.937, green: 0.561, blue: 0.200)
-        case .amber:   return Color(red: 0.878, green: 0.663, blue: 0.231)
-        case .brown:   return Color(red: 0.608, green: 0.420, blue: 0.290)
-        case .green:   return Color(red: 0.184, green: 0.627, blue: 0.376)
-        case .lime:    return Color(red: 0.482, green: 0.718, blue: 0.286)
-        case .teal:    return Color(red: 0.122, green: 0.631, blue: 0.620)
-        case .cyan:    return Color(red: 0.125, green: 0.682, blue: 0.753)
-        case .slate:   return Color(red: 0.392, green: 0.439, blue: 0.537)
-        case .gray:    return Color(red: 0.500, green: 0.530, blue: 0.580)
+        case .blue:    return (0.204, 0.471, 0.902)
+        case .navy:    return (0.169, 0.294, 0.561)
+        case .indigo:  return (0.322, 0.353, 0.780)
+        case .purple:  return (0.549, 0.361, 0.820)
+        case .magenta: return (0.722, 0.302, 0.769)
+        case .pink:    return (0.898, 0.345, 0.624)
+        case .rose:    return (0.878, 0.439, 0.541)
+        case .red:     return (0.878, 0.333, 0.357)
+        case .orange:  return (0.937, 0.561, 0.200)
+        case .amber:   return (0.878, 0.663, 0.231)
+        case .brown:   return (0.608, 0.420, 0.290)
+        case .green:   return (0.184, 0.627, 0.376)
+        case .lime:    return (0.482, 0.718, 0.286)
+        case .teal:    return (0.122, 0.631, 0.620)
+        case .cyan:    return (0.125, 0.682, 0.753)
+        case .slate:   return (0.392, 0.439, 0.537)
+        case .gray:    return (0.500, 0.530, 0.580)
+        }
+    }
+
+    var color: Color { Color(red: rgb.r, green: rgb.g, blue: rgb.b) }
+
+    /// A readable text colour for this hue on a light tint of itself, adapting
+    /// to the theme: darkened in light mode, lightened in dark mode. Keeps even
+    /// light hues (lime, amber, cyan) legible on the tinted pill background.
+    func readableText(_ scheme: ColorScheme) -> Color {
+        let c = rgb
+        if scheme == .dark {
+            return Color(red: c.r * 0.55 + 0.45, green: c.g * 0.55 + 0.45, blue: c.b * 0.55 + 0.45)
+        } else {
+            return Color(red: c.r * 0.60, green: c.g * 0.60, blue: c.b * 0.60)
         }
     }
 
