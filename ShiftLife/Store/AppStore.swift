@@ -186,6 +186,27 @@ final class AppStore: ObservableObject {
 
     func deleteEvent(_ e: CalendarEvent) { data.events.removeAll { $0.id == e.id } }
 
+    /// Imports events from the device calendar. Events already present (matched
+    /// by `externalID`) are updated in place, keeping their ShiftLife id and any
+    /// local edits to category/colour. Returns how many were newly added.
+    @discardableResult
+    func importEvents(_ incoming: [CalendarEvent]) -> Int {
+        var added = 0
+        for ev in incoming {
+            guard let ext = ev.externalID else { continue }
+            if let i = data.events.firstIndex(where: { $0.externalID == ext }) {
+                // Refresh time/title from the source, keep local classification.
+                data.events[i].title = ev.title
+                data.events[i].start = ev.start
+                data.events[i].end = ev.end
+            } else {
+                data.events.append(ev)
+                added += 1
+            }
+        }
+        return added
+    }
+
     func upsertTask(_ t: TaskItem) {
         if let i = data.tasks.firstIndex(where: { $0.id == t.id }) {
             data.tasks[i] = t

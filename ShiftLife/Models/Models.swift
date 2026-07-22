@@ -356,6 +356,9 @@ struct CalendarEvent: Identifiable, Codable, Hashable {
     var isGenerated: Bool = false
     /// The child this generated event belongs to (for clean regeneration).
     var sourceChildID: UUID? = nil
+    /// Identifier of the source event when imported from the device calendar
+    /// (EKEvent.eventIdentifier). Used to avoid duplicates on re-import.
+    var externalID: String? = nil
 }
 
 enum TaskCondition: String, Codable, CaseIterable, Identifiable {

@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var store: AppStore
     @State private var showExport = false
+    @State private var showImport = false
     @State private var showDeleteConfirm = false
 
     var body: some View {
@@ -22,13 +23,16 @@ struct SettingsView: View {
             }
 
             Section {
+                Button { showImport = true } label: {
+                    Label("Termine aus Kalender importieren", systemImage: "calendar.badge.plus")
+                }
                 ShareLink(item: CalendarExport.writeICSFile(store: store)) {
-                    Label("In Kalender exportieren (.ics)", systemImage: "calendar.badge.plus")
+                    Label("In Kalender exportieren (.ics)", systemImage: "square.and.arrow.up")
                 }
             } header: {
                 Text("Kalender")
             } footer: {
-                Text("Dienste & Termine der nächsten 8 Wochen als .ics – in Apple oder Google Kalender importierbar.")
+                Text("Importiere bestehende Termine, damit sie Konflikte mit deinen Diensten auslösen. Export gibt Dienste & Termine der nächsten 8 Wochen als .ics aus.")
             }
 
             Section("Planung") {
@@ -56,6 +60,7 @@ struct SettingsView: View {
         .navigationTitle("Einstellungen")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showExport) { ExportView(json: store.exportJSON()) }
+        .sheet(isPresented: $showImport) { CalendarImportView() }
         .alert("Alle Daten löschen?", isPresented: $showDeleteConfirm) {
             Button("Löschen", role: .destructive) { store.deleteAllData() }
             Button("Abbrechen", role: .cancel) {}
