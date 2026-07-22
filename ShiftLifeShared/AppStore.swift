@@ -237,6 +237,31 @@ final class AppStore: ObservableObject {
         return created
     }
 
+    /// The shift to *display* for a member on a given day. Returns either a
+    /// shift that starts that day, or the after-midnight tail of an overnight
+    /// shift that started the previous day (so a 22:00–05:00 duty shows on both
+    /// days). `isContinuation` marks the second-day tail.
+    func dayShift(for memberID: UUID, on day: Date) -> (instance: ShiftInstance, isContinuation: Bool)? {
+        if let inst = shiftInstance(for: memberID, on: day) {
+            return (inst, false)
+        }
+        let cal = Calendar.current
+        let prev = cal.date(byAdding: .day, value: -1, to: cal.startOfDay(for: day))!
+        if let inst = shiftInstance(for: memberID, on: prev) {
+            let m = effectiveMinutes(inst)
+            if m.end <= m.start { return (inst, true) }   // crosses midnight → tail today
+        }
+        return nil
+    }
+
+    /// Time label for a shift as shown on a specific day. On the continuation
+    /// day the tail is clipped to start at 00:00.
+    func shiftDayTimeLabel(_ inst: ShiftInstance, isContinuation: Bool) -> String {
+        let m = effectiveMinutes(inst)
+        if isContinuation { return "00:00–\(ShiftType.timeString(m.end))" }
+        return "\(ShiftType.timeString(m.start))–\(ShiftType.timeString(m.end))"
+    }
+
     /// Effective start/end minutes for an instance (individual override for
     /// variable-time shifts, otherwise the shift type's default).
     func effectiveMinutes(_ inst: ShiftInstance) -> (start: Int, end: Int) {

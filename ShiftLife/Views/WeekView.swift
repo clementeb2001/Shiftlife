@@ -109,8 +109,13 @@ struct WeekView: View {
         m.name.split(separator: " ").first.map(String.init) ?? m.name
     }
 
-    private func shiftType(for memberID: UUID, on day: Date) -> ShiftType? {
-        store.shiftInstance(for: memberID, on: day).flatMap { store.shiftType($0.shiftTypeID) }
+    /// Shift to display for a member on a day, including the after-midnight tail
+    /// of an overnight shift that started the previous day. `editDay` is the day
+    /// the underlying instance lives on (so tapping edits the right day).
+    private func dayShiftInfo(for memberID: UUID, on day: Date) -> (type: ShiftType, isContinuation: Bool, editDay: Date)? {
+        guard let (inst, cont) = store.dayShift(for: memberID, on: day),
+              let t = store.shiftType(inst.shiftTypeID) else { return nil }
+        return (t, cont, inst.date)
     }
 
     private func events(on day: Date) -> [CalendarEvent] {
@@ -147,9 +152,9 @@ struct WeekView: View {
                             MemberAvatar(member: m, size: 28)
                             Text(firstName(m)).fontWeight(.medium).foregroundStyle(.primary)
                             Spacer()
-                            if let inst = store.shiftInstance(for: m.id, on: anchor),
+                            if let (inst, cont) = store.dayShift(for: m.id, on: anchor),
                                let t = store.shiftType(inst.shiftTypeID) {
-                                Chip(text: "\(t.abbreviation) · \(store.effectiveTimeString(inst))",
+                                Chip(text: "\(t.abbreviation) · \(store.shiftDayTimeLabel(inst, isContinuation: cont))",
                                      color: t.color.color, filled: true)
                             } else {
                                 Chip(text: "frei", systemImage: "checkmark", color: Theme.success)
@@ -218,8 +223,8 @@ struct WeekView: View {
 
     // MARK: Pills
 
-    private func shiftPill(_ m: HouseholdMember, _ t: ShiftType, day: Date, compact: Bool, full: Bool) -> some View {
-        Text(compact ? t.abbreviation : t.name)
+    private func shiftPill(_ m: HouseholdMember, _ t: ShiftType, editDay: Date, compact: Bool, full: Bool, continuation: Bool = false) -> some View {
+        Text(compact ? (continuation ? "→\(t.abbreviation)" : t.abbreviation) : t.name)
             .font(.system(size: compact ? 8.5 : 10, weight: .bold))
             .foregroundStyle(.white)
             .lineLimit(compact ? 1 : 2)
@@ -227,9 +232,9 @@ struct WeekView: View {
             .frame(maxWidth: .infinity)
             .frame(minHeight: full ? (compact ? 30 : 52) : 0)
             .padding(.horizontal, 4).padding(.vertical, compact ? 2 : 4)
-            .background(t.color.color, in: RoundedRectangle(cornerRadius: compact ? 4 : 6))
+            .background(t.color.color.opacity(continuation ? 0.7 : 1.0), in: RoundedRectangle(cornerRadius: compact ? 4 : 6))
             .contentShape(Rectangle())
-            .onTapGesture { selectedCell = CellSelection(member: m, day: day) }
+            .onTapGesture { selectedCell = CellSelection(member: m, day: editDay) }
     }
 
     private func eventPill(_ ev: CalendarEvent, compact: Bool) -> some View {
@@ -251,13 +256,13 @@ struct WeekView: View {
     /// person-coloured event pills (capped). Used only by the month grid.
     private func monthDayStack(_ day: Date) -> some View {
         let user = store.currentUser
-        let userShift = shiftType(for: user.id, on: day)
+        let ds = dayShiftInfo(for: user.id, on: day)
         let evs = events(on: day)
-        let full = evs.isEmpty && userShift != nil
+        let full = evs.isEmpty && ds != nil
         let shownEvs = Array(evs.prefix(3))
         let overflow = max(0, evs.count - 3)
         return VStack(spacing: 2) {
-            if let t = userShift { shiftPill(user, t, day: day, compact: true, full: full) }
+            if let ds { shiftPill(user, ds.type, editDay: ds.editDay, compact: true, full: full, continuation: ds.isContinuation) }
             ForEach(shownEvs) { ev in eventPill(ev, compact: true) }
             if overflow > 0 {
                 Text("+\(overflow)").font(.system(size: 8, weight: .bold))
@@ -269,15 +274,15 @@ struct WeekView: View {
     /// One member's cell for a day (per-person week): their shift fills it, their
     /// events (and childcare they're responsible for) stack below in person colour.
     private func memberDayCell(_ m: HouseholdMember, _ day: Date) -> some View {
-        let t = shiftType(for: m.id, on: day)
+        let ds = dayShiftInfo(for: m.id, on: day)
         let evs = store.data.events
             .filter { ($0.memberIDs.contains(m.id) || $0.responsibleMemberID == m.id) && cal.isDate($0.start, inSameDayAs: day) }
             .sorted { $0.start < $1.start }
-        let full = evs.isEmpty && t != nil
+        let full = evs.isEmpty && ds != nil
         return VStack(spacing: 3) {
-            if let t { shiftPill(m, t, day: day, compact: true, full: full) }
+            if let ds { shiftPill(m, ds.type, editDay: ds.editDay, compact: true, full: full, continuation: ds.isContinuation) }
             ForEach(evs) { ev in eventPill(ev, compact: true) }
-            if t == nil && evs.isEmpty {
+            if ds == nil && evs.isEmpty {
                 Text("·").font(.caption2).foregroundStyle(Theme.subtleText).frame(maxWidth: .infinity)
             }
         }
