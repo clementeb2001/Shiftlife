@@ -17,6 +17,7 @@ struct SettingsView: View {
                     }
                 }
                 NavigationLink { NotificationsView() } label: { Label("Erinnerungen", systemImage: "bell.badge.fill") }
+                NavigationLink { SyncSettingsView() } label: { Label("Familien-Sync (iCloud)", systemImage: "arrow.triangle.2.circlepath.icloud.fill") }
                 NavigationLink { StatisticsView() } label: { Label("Meine Statistik", systemImage: "chart.bar.fill") }
                 NavigationLink { HouseholdView() } label: { Label("Meine Personen", systemImage: "person.2.fill") }
                 NavigationLink { ShiftTypesView() } label: { Label("Schichtarten & Muster", systemImage: "square.stack.3d.up.fill") }

@@ -18,6 +18,12 @@ struct AppData: Codable {
     var isPremium: Bool = false            // paywall gate for family features
     var considerRestAfterNight: Bool = true
     var notifications: NotificationPref = NotificationPref()
+    /// When the state was last changed locally. Used for last-writer-wins when
+    /// merging with an iCloud copy (see CloudSync). Bumped centrally on save.
+    var updatedAt: Date = .distantPast
+    /// Opt-in flag for the (prepared) iCloud family sync. Off by default so the
+    /// app is fully local until the iCloud capability is enabled on a Mac.
+    var syncEnabled: Bool = false
 }
 
 /// Local (on-device) reminder preferences. No server/push needed.
@@ -30,8 +36,19 @@ struct NotificationPref: Codable, Equatable {
 
 final class AppStore: ObservableObject {
     @Published var data: AppData {
-        didSet { if !inMemory { persistence.save(data) } }
+        didSet {
+            if stamping || inMemory { return }
+            stamping = true
+            data.updatedAt = Date()          // re-entrant set; guarded by `stamping`
+            stamping = false
+            persistence.save(data)
+            onLocalChange?(data)             // let the sync layer push, if active
+        }
     }
+    private var stamping = false
+
+    /// Called after a local change is persisted (used by CloudSync to upload).
+    var onLocalChange: ((AppData) -> Void)?
 
     /// Swappable storage backend. Local today; CloudKit-ready later (see CLOUDKIT.md).
     private let persistence: PersistenceProvider
@@ -60,6 +77,16 @@ final class AppStore: ObservableObject {
     /// Writes the current state to disk immediately (bypasses the debounced
     /// save). For extensions / App Intents that mutate and then exit.
     func flush() { persistence.saveNow(data) }
+
+    /// Adopts a snapshot received from iCloud when it is newer than the local
+    /// one. Does not re-stamp or push back, so it can't cause a sync loop.
+    func applyRemote(_ remote: AppData) {
+        guard remote.updatedAt > data.updatedAt else { return }
+        stamping = true
+        data = remote
+        stamping = false
+        persistence.saveNow(data)
+    }
 
     /// Wipes local data (GDPR "vollständige Löschung" requirement).
     func deleteAllData() {

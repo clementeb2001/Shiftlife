@@ -16,9 +16,16 @@ struct ShiftLifeApp: App {
             }
             .environmentObject(store)
             .tint(Theme.brand)
+            .onAppear {
+                // Start iCloud family sync only if the user turned it on (off by
+                // default → app stays fully local). See CloudSync / CLOUDKIT.md.
+                CloudSync.shared.startIfEnabled(store)
+            }
             .onChange(of: scenePhase) { _, phase in
-                // Keep local reminders in sync with the current plan.
-                if phase == .active { NotificationManager.reschedule(store.data) }
+                if phase == .active {
+                    NotificationManager.reschedule(store.data)   // keep reminders current
+                    CloudSync.shared.refresh()                    // pull latest from iCloud
+                }
             }
         }
     }
