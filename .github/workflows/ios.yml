@@ -9,6 +9,8 @@ on:
       - claude/ios-app-development-88wtpb
     paths:
       - 'ShiftLife/**'
+      - 'ShiftLifeShared/**'
+      - 'ShiftLifeWidget/**'
       - 'ShiftLife.xcodeproj/**'
       - 'Tests/**'
       - '.github/workflows/ios.yml'

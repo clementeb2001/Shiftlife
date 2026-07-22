@@ -49,6 +49,14 @@ final class AppStore: ObservableObject {
         }
     }
 
+    /// Read-only store seeded with an existing snapshot – used by the widget
+    /// extension, which must never write back. Nothing is persisted.
+    init(readOnly snapshot: AppData) {
+        self.inMemory = true
+        self.persistence = LocalJSONPersistence()
+        self.data = snapshot
+    }
+
     /// Wipes local data (GDPR "vollständige Löschung" requirement).
     func deleteAllData() {
         persistence.wipe()

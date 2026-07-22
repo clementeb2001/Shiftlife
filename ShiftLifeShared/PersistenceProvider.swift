@@ -15,14 +15,14 @@ protocol PersistenceProvider {
     func wipe()
 }
 
-/// Local, offline-first store: a single JSON file in the app's Documents dir.
+/// Local, offline-first store: a single JSON file in the shared App Group
+/// container (so the widget can read it), falling back to Documents.
 final class LocalJSONPersistence: PersistenceProvider {
     private let fileURL: URL
     private var pending: DispatchWorkItem?
 
-    init(filename: String = "shiftlife_data.json") {
-        let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        fileURL = dir.appendingPathComponent(filename)
+    init() {
+        fileURL = SharedContainer.storeURL
     }
 
     func load() -> AppData? {
