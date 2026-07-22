@@ -15,6 +15,7 @@ struct SettingsView: View {
                         Text(store.currentUser.role.label).font(.caption).foregroundStyle(Theme.subtleText)
                     }
                 }
+                NavigationLink { NotificationsView() } label: { Label("Erinnerungen", systemImage: "bell.badge.fill") }
                 NavigationLink { StatisticsView() } label: { Label("Meine Statistik", systemImage: "chart.bar.fill") }
                 NavigationLink { HouseholdView() } label: { Label("Meine Personen", systemImage: "person.2.fill") }
                 NavigationLink { ShiftTypesView() } label: { Label("Schichtarten & Muster", systemImage: "square.stack.3d.up.fill") }

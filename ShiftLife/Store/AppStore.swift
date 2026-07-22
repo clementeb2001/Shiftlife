@@ -17,6 +17,15 @@ struct AppData: Codable {
     var hasCompletedOnboarding: Bool = false
     var isPremium: Bool = false            // paywall gate for family features
     var considerRestAfterNight: Bool = true
+    var notifications: NotificationPref = NotificationPref()
+}
+
+/// Local (on-device) reminder preferences. No server/push needed.
+struct NotificationPref: Codable, Equatable {
+    var enabled: Bool = false
+    var shiftReminders: Bool = true
+    var shiftLeadMinutes: Int = 60
+    var taskReminders: Bool = true
 }
 
 final class AppStore: ObservableObject {
