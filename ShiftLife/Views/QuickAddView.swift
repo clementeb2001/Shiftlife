@@ -57,6 +57,10 @@ struct AddShiftQuick: View {
     @State private var memberID: UUID?
     @State private var typeID: UUID?
     @State private var date = Date()
+    @State private var start = Date()
+    @State private var end = Date()
+
+    private var selectedType: ShiftType? { typeID.flatMap { store.shiftType($0) } }
 
     var body: some View {
         Form {
@@ -69,9 +73,24 @@ struct AddShiftQuick: View {
                 ForEach(store.data.shiftTypes) { Text($0.name).tag(UUID?.some($0.id)) }
             }
             DatePicker("Tag", selection: $date, displayedComponents: .date)
+
+            if selectedType?.hasVariableTime == true {
+                Section {
+                    DatePicker("Von", selection: $start, displayedComponents: .hourAndMinute)
+                    DatePicker("Bis", selection: $end, displayedComponents: .hourAndMinute)
+                } header: {
+                    Text("Individuelle Zeit")
+                }
+            }
+
             Button("Eintragen") {
                 let m = memberID ?? store.currentUser.id
-                store.setShift(memberID: m, typeID: typeID, on: date)
+                if selectedType?.hasVariableTime == true {
+                    store.setShift(memberID: m, typeID: typeID, on: date,
+                                   startMinutes: minutes(start), endMinutes: minutes(end))
+                } else {
+                    store.setShift(memberID: m, typeID: typeID, on: date)
+                }
                 dismiss()
             }
             .disabled(memberID == nil && store.data.members.isEmpty)
@@ -79,6 +98,11 @@ struct AddShiftQuick: View {
         .navigationTitle("Dienst eintragen")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { if memberID == nil { memberID = store.currentUser.id } }
+    }
+
+    private func minutes(_ d: Date) -> Int {
+        let c = Calendar.current.dateComponents([.hour, .minute], from: d)
+        return (c.hour ?? 0) * 60 + (c.minute ?? 0)
     }
 }
 
