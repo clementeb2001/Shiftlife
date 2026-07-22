@@ -27,9 +27,10 @@ enum CalendarExport {
         for inst in store.data.shiftInstances where inst.date >= now && inst.date <= end {
             guard let t = store.shiftType(inst.shiftTypeID) else { continue }
             let day = cal.startOfDay(for: inst.date)
-            let s = cal.date(byAdding: .minute, value: t.startMinutes, to: day)!
-            var e = cal.date(byAdding: .minute, value: t.endMinutes, to: day)!
-            if t.crossesMidnight { e = cal.date(byAdding: .day, value: 1, to: e)! }
+            let m = store.effectiveMinutes(inst)
+            let s = cal.date(byAdding: .minute, value: m.start, to: day)!
+            var e = cal.date(byAdding: .minute, value: m.end, to: day)!
+            if m.end <= m.start { e = cal.date(byAdding: .day, value: 1, to: e)! }
             let who = store.member(inst.memberID).map { $0.name.split(separator: " ").first.map(String.init) ?? $0.name } ?? ""
             appendEvent(uid: inst.id.uuidString, start: s, end: e,
                         summary: (who.isEmpty ? "" : "\(who): ") + t.name)

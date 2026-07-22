@@ -139,15 +139,32 @@ final class AppStore: ObservableObject {
         }
     }
 
-    func setShift(memberID: UUID, typeID: UUID?, on day: Date) {
+    func setShift(memberID: UUID, typeID: UUID?, on day: Date,
+                  startMinutes: Int? = nil, endMinutes: Int? = nil) {
         let cal = Calendar.current
         let d = cal.startOfDay(for: day)
         data.shiftInstances.removeAll { $0.memberID == memberID && cal.isDate($0.date, inSameDayAs: d) }
         if let typeID {
             data.shiftInstances.append(
-                ShiftInstance(memberID: memberID, shiftTypeID: typeID, date: d, isManualOverride: true)
+                ShiftInstance(memberID: memberID, shiftTypeID: typeID, date: d,
+                              isManualOverride: true,
+                              startMinutesOverride: startMinutes, endMinutesOverride: endMinutes)
             )
         }
+    }
+
+    /// Effective start/end minutes for an instance (individual override for
+    /// variable-time shifts, otherwise the shift type's default).
+    func effectiveMinutes(_ inst: ShiftInstance) -> (start: Int, end: Int) {
+        let t = shiftType(inst.shiftTypeID)
+        return (inst.startMinutesOverride ?? t?.startMinutes ?? 0,
+                inst.endMinutesOverride ?? t?.endMinutes ?? 0)
+    }
+
+    /// "HH:mm–HH:mm" for an instance's effective times.
+    func effectiveTimeString(_ inst: ShiftInstance) -> String {
+        let m = effectiveMinutes(inst)
+        return "\(ShiftType.timeString(m.start))–\(ShiftType.timeString(m.end))"
     }
 
     func upsertEvent(_ e: CalendarEvent) {

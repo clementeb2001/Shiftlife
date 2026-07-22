@@ -25,9 +25,10 @@ extension AppStore {
             guard type.counterCategory.blocksTime else { continue }
 
             let day = cal.startOfDay(for: inst.date)
-            let start = cal.date(byAdding: .minute, value: type.startMinutes, to: day)!
-            var end = cal.date(byAdding: .minute, value: type.endMinutes, to: day)!
-            if type.crossesMidnight {
+            let m = effectiveMinutes(inst)
+            let start = cal.date(byAdding: .minute, value: m.start, to: day)!
+            var end = cal.date(byAdding: .minute, value: m.end, to: day)!
+            if m.end <= m.start {
                 end = cal.date(byAdding: .day, value: 1, to: end)!
             }
             if start < rangeEnd && rangeStart < end {

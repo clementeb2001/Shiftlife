@@ -27,7 +27,8 @@ struct StatisticsView: View {
     private var workedMinutes: Int {
         monthInstances.reduce(0) { sum, inst in
             guard let t = store.shiftType(inst.shiftTypeID), t.counterCategory.blocksTime else { return sum }
-            var d = t.endMinutes - t.startMinutes
+            let m = store.effectiveMinutes(inst)
+            var d = m.end - m.start
             if d <= 0 { d += 1440 }
             return sum + d
         }

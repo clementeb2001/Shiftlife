@@ -14,7 +14,7 @@ struct ShiftTypesView: View {
                             Circle().fill(t.color.color).frame(width: 16, height: 16)
                             VStack(alignment: .leading) {
                                 Text(t.name).foregroundStyle(.primary)
-                                Text("\(t.startTimeString)–\(t.endTimeString) · \(t.counterCategory.label)")
+                                Text("\(t.hasVariableTime ? "individuelle Zeit" : "\(t.startTimeString)–\(t.endTimeString)") · \(t.counterCategory.label)")
                                     .font(.caption).foregroundStyle(Theme.subtleText)
                             }
                             Spacer()
@@ -55,6 +55,7 @@ struct EditShiftTypeSheet: View {
     @State private var end: Date
     @State private var restHours: Int
     @State private var category: ShiftCategory
+    @State private var hasVariableTime: Bool
     private let existingID: UUID?
 
     init(shiftType: ShiftType?) {
@@ -68,6 +69,7 @@ struct EditShiftTypeSheet: View {
                                             minute: (shiftType?.endMinutes ?? 840) % 60, second: 0, of: Date())!)
         _restHours = State(initialValue: shiftType?.restHours ?? 0)
         _category = State(initialValue: shiftType?.counterCategory ?? .work)
+        _hasVariableTime = State(initialValue: shiftType?.hasVariableTime ?? false)
         existingID = shiftType?.id
     }
 
@@ -78,10 +80,19 @@ struct EditShiftTypeSheet: View {
                     TextField("Name (z. B. Frühdienst)", text: $name)
                     TextField("Kürzel (z. B. F)", text: $abbreviation)
                 }
-                Section("Zeiten") {
-                    DatePicker("Beginn", selection: $start, displayedComponents: .hourAndMinute)
-                    DatePicker("Ende", selection: $end, displayedComponents: .hourAndMinute)
+                Section {
+                    Toggle("Individuelle Zeit (jedes Mal eingeben)", isOn: $hasVariableTime)
+                    if !hasVariableTime {
+                        DatePicker("Beginn", selection: $start, displayedComponents: .hourAndMinute)
+                        DatePicker("Ende", selection: $end, displayedComponents: .hourAndMinute)
+                    }
                     Stepper("Ruhezeit danach: \(restHours) Std", value: $restHours, in: 0...16)
+                } header: {
+                    Text("Zeiten")
+                } footer: {
+                    if hasVariableTime {
+                        Text("Zeitspanne wird bei jedem Eintrag einzeln abgefragt (z. B. Bereitschaft).")
+                    }
                 }
                 Section("Kategorie") {
                     Picker("Kategorie", selection: $category) {
@@ -121,7 +132,7 @@ struct EditShiftTypeSheet: View {
     private func save() {
         let t = ShiftType(id: existingID ?? UUID(), name: name, abbreviation: abbreviation,
                           color: color, startMinutes: minutes(start), endMinutes: minutes(end),
-                          restHours: restHours, counterCategory: category)
+                          restHours: restHours, hasVariableTime: hasVariableTime, counterCategory: category)
         store.upsertShiftType(t)
         dismiss()
     }

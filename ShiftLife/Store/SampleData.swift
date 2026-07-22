@@ -28,8 +28,9 @@ extension AppStore {
                               startMinutes: 14 * 60, endMinutes: 22 * 60, restHours: 0, counterCategory: .work)
         let nacht = ShiftType(name: "Nachtdienst", abbreviation: "N", color: .indigo,
                               startMinutes: 22 * 60, endMinutes: 6 * 60, restHours: 11, counterCategory: .work)
-        let bereitschaft = ShiftType(name: "Bereitschaft", abbreviation: "B", color: .purple,
-                                     startMinutes: 8 * 60, endMinutes: 20 * 60, restHours: 0, counterCategory: .onCall)
+        let bereitschaft = ShiftType(name: "Bereitschaft (Feuerwehr)", abbreviation: "B", color: .red,
+                                     startMinutes: 18 * 60, endMinutes: 22 * 60, restHours: 0,
+                                     hasVariableTime: true, counterCategory: .onCall)
 
         // Jonas works a regular office job (Mon–Fri 9–17) as a single shift type.
         let buero = ShiftType(name: "Büro", abbreviation: "Bü", color: .green,

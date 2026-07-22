@@ -187,6 +187,10 @@ struct ShiftType: Identifiable, Codable, Hashable {
     /// Optional rest period (Ruhezeit) in hours to block AFTER the shift ends,
     /// e.g. recovery after a night shift.
     var restHours: Int = 0
+    /// When true, the start/end here are only a default; the actual time span is
+    /// entered individually each time the shift is added (e.g. volunteer fire
+    /// brigade on-call). The per-day times live on the ShiftInstance.
+    var hasVariableTime: Bool = false
     /// A shift can represent "off" categories (Urlaub/Krankheit) that don't block
     /// common free time in the same way. `blocksTime == false` means the person is
     /// simply unavailable-labelled but still counts as free for planning.
@@ -255,6 +259,10 @@ struct ShiftInstance: Identifiable, Codable, Hashable {
     var date: Date
     /// True when this instance was hand-edited and should survive pattern re-apply.
     var isManualOverride: Bool = false
+    /// Individual start/end (minutes from midnight) for variable-time shifts;
+    /// nil falls back to the shift type's default times.
+    var startMinutesOverride: Int? = nil
+    var endMinutesOverride: Int? = nil
 }
 
 // MARK: - Calendar events & tasks

@@ -146,8 +146,9 @@ struct WeekView: View {
                             MemberAvatar(member: m, size: 28)
                             Text(firstName(m)).fontWeight(.medium).foregroundStyle(.primary)
                             Spacer()
-                            if let t = shiftType(for: m.id, on: anchor) {
-                                Chip(text: "\(t.abbreviation) · \(t.startTimeString)–\(t.endTimeString)",
+                            if let inst = store.shiftInstance(for: m.id, on: anchor),
+                               let t = store.shiftType(inst.shiftTypeID) {
+                                Chip(text: "\(t.abbreviation) · \(store.effectiveTimeString(inst))",
                                      color: t.color.color, filled: true)
                             } else {
                                 Chip(text: "frei", systemImage: "checkmark", color: Theme.success)

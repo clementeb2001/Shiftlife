@@ -111,7 +111,7 @@ struct TodayView: View {
                         RoundedRectangle(cornerRadius: 6).fill(type.color.color).frame(width: 6, height: 44)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(type.name).font(.title3.bold())
-                            Text("\(type.startTimeString)–\(type.endTimeString)")
+                            Text(inst.map(store.effectiveTimeString) ?? "\(type.startTimeString)–\(type.endTimeString)")
                                 .foregroundStyle(Theme.subtleText)
                         }
                         Spacer()
@@ -152,8 +152,8 @@ struct TodayView: View {
         let inst = store.shiftInstance(for: m.id, on: today)
         let type = inst.flatMap { store.shiftType($0.shiftTypeID) }
         return Group {
-            if let type {
-                Chip(text: "\(type.name) · \(type.startTimeString)–\(type.endTimeString)",
+            if let type, let inst {
+                Chip(text: "\(type.name) · \(store.effectiveTimeString(inst))",
                      systemImage: "briefcase.fill", color: type.color.color)
             } else {
                 Chip(text: "Frei", systemImage: "checkmark", color: Theme.success)
