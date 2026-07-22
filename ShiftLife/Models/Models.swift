@@ -127,11 +127,28 @@ struct HouseholdMember: Identifiable, Codable, Hashable {
     var careInfo: String = ""
     /// For children: recurring pickup slots used for childcare planning.
     var pickups: [Pickup] = []
+    /// For children: birth year, used to derive age.
+    var birthYear: Int? = nil
+    /// For children: age up to which adult supervision applies. Above it the
+    /// child is considered independent and plans on their own.
+    var supervisionUntilAge: Int = 12
 
     var initials: String {
         let parts = name.split(separator: " ")
         let letters = parts.prefix(2).compactMap { $0.first }
         return String(letters).uppercased()
+    }
+
+    /// Approximate current age in years (nil if no birth year set).
+    func age(now: Date = Date()) -> Int? {
+        birthYear.map { Calendar.current.component(.year, from: now) - $0 }
+    }
+
+    /// Does this child still need adult supervision for its activities?
+    var needsSupervisionByAge: Bool {
+        guard role == .child else { return false }
+        guard let a = age() else { return true }   // unknown age → assume yes
+        return a <= supervisionUntilAge
     }
 }
 
@@ -271,25 +288,27 @@ enum EventCategory: String, Codable, CaseIterable, Identifiable {
 
 /// For events involving a child: how much adult supervision they need.
 enum ChildSupervision: String, Codable, CaseIterable, Identifiable {
-    case informational   // nur informativ – Eltern sehen, was das Kind macht
     case parentRequired  // ein Elternteil muss dabei sein
     case noParent        // kein Elternteil nötig
+    case informational   // legacy (== noParent), kept so old data still decodes
 
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .informational: return "Nur informativ"
         case .parentRequired: return "Ein Elternteil muss dabei sein"
-        case .noParent: return "Kein Elternteil nötig"
+        case .noParent, .informational: return "Kein Elternteil nötig"
         }
     }
     var hint: String {
         switch self {
-        case .informational: return "Eltern sehen, was das Kind macht. Kein Konflikt."
         case .parentRequired: return "Konflikt nur, wenn kein Elternteil kann."
-        case .noParent: return "Kein Konflikt."
+        case .noParent, .informational: return "Kein Konflikt."
         }
     }
+    /// Map legacy `.informational` onto `.noParent`.
+    var normalized: ChildSupervision { self == .informational ? .noParent : self }
+    /// Options offered in the picker (legacy value hidden).
+    static var pickable: [ChildSupervision] { [.parentRequired, .noParent] }
 }
 
 struct CalendarEvent: Identifiable, Codable, Hashable {

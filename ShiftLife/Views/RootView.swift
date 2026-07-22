@@ -22,20 +22,22 @@ struct RootView: View {
             TasksView()
                 .tabItem { Label("Aufgaben", systemImage: "checklist") }
         }
-        .overlay(alignment: .bottom) {
-            // Central quick-add button floating above the tab bar.
+        .overlay(alignment: .bottomTrailing) {
+            // Quick-add button floating at the bottom-right, above the tab bar
+            // (so it never covers a tab item).
             Button {
                 showQuickAdd = true
             } label: {
                 Image(systemName: "plus")
                     .font(.title2.weight(.bold))
                     .foregroundStyle(.white)
-                    .frame(width: 56, height: 56)
+                    .frame(width: 54, height: 54)
                     .background(Theme.brand, in: Circle())
                     .shadow(color: Theme.brand.opacity(0.4), radius: 8, y: 4)
             }
             .accessibilityLabel("Schnell hinzufügen")
-            .offset(y: -28)
+            .padding(.trailing, 18)
+            .padding(.bottom, 62)
         }
         .sheet(isPresented: $showQuickAdd) {
             QuickAddView()

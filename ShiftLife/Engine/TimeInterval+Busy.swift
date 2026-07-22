@@ -64,6 +64,11 @@ extension AppStore {
             .sorted { $0.start < $1.start }
     }
 
+    /// Does the event involve at least one child that still needs supervision?
+    func childNeedsSupervision(_ ev: CalendarEvent) -> Bool {
+        ev.memberIDs.compactMap { member($0) }.contains { $0.role == .child && $0.needsSupervisionByAge }
+    }
+
     /// Colour used for an event in the calendar = the associated person's colour
     /// (child first, then partner, then me), so all activities with a person share
     /// that person's colour.

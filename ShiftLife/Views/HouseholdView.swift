@@ -45,6 +45,8 @@ struct EditMemberSheet: View {
     @State private var color: AppColor
     @State private var careInfo: String
     @State private var pickups: [Pickup]
+    @State private var birthYearText: String
+    @State private var supervisionUntilAge: Int
     private let existingID: UUID?
     private let isCurrentUser: Bool
 
@@ -57,8 +59,14 @@ struct EditMemberSheet: View {
         _color = State(initialValue: member?.color ?? .green)
         _careInfo = State(initialValue: member?.careInfo ?? "")
         _pickups = State(initialValue: member?.pickups ?? [])
+        _birthYearText = State(initialValue: member?.birthYear.map(String.init) ?? "")
+        _supervisionUntilAge = State(initialValue: member?.supervisionUntilAge ?? 12)
         existingID = member?.id
         isCurrentUser = member?.isCurrentUser ?? false
+    }
+
+    private var currentAge: Int? {
+        Int(birthYearText).map { Calendar.current.component(.year, from: Date()) - $0 }
     }
 
     private var adults: [HouseholdMember] { store.data.members.filter { $0.role != .child } }
@@ -76,6 +84,19 @@ struct EditMemberSheet: View {
                 if role == .child {
                     Section("Schule / Betreuung") {
                         TextField("z. B. Grundschule, Kita", text: $careInfo)
+                    }
+                    Section {
+                        TextField("Geburtsjahr (z. B. \(Calendar.current.component(.year, from: Date()) - 8))", text: $birthYearText)
+                            .keyboardType(.numberPad)
+                        Stepper("Begleitung nötig bis \(supervisionUntilAge) Jahre", value: $supervisionUntilAge, in: 0...18)
+                    } header: {
+                        Text("Alter & Selbstständigkeit")
+                    } footer: {
+                        if let a = currentAge {
+                            Text("Aktuell ca. \(a) Jahre – \(a <= supervisionUntilAge ? "Betreuungs-Option aktiv." : "gilt als selbstständig, keine Betreuungs-Option."). Ab dem Alter plant das Kind selbst.")
+                        } else {
+                            Text("Ohne Geburtsjahr ist die Betreuungs-Option immer verfügbar. Ab dem eingestellten Alter entfällt sie – das Kind plant selbst.")
+                        }
                     }
                     pickupSection
                 }
@@ -164,6 +185,8 @@ struct EditMemberSheet: View {
         if role == .child {
             m.careInfo = careInfo
             m.pickups = pickups
+            m.birthYear = Int(birthYearText)
+            m.supervisionUntilAge = supervisionUntilAge
         }
         store.upsertMember(m)
         if regenerate {

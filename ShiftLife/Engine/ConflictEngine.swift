@@ -20,9 +20,9 @@ enum ConflictEngine {
             // --- Child events: attendance is flexible, only supervision matters. ---
             if involvesChild || ev.category == .childcare {
                 // Effective supervision: explicit, else childcare defaults to
-                // "parent required", other child events to "informational".
-                let supervision = ev.childSupervision ?? (ev.category == .childcare ? .parentRequired : .informational)
-                if supervision == .parentRequired {
+                // "parent required", other child events to "no parent".
+                let supervision = (ev.childSupervision?.normalized) ?? (ev.category == .childcare ? .parentRequired : .noParent)
+                if supervision == .parentRequired && store.childNeedsSupervision(ev) {
                     let respAvailable = ev.responsibleMemberID
                         .map { store.isAdultAvailable($0, from: ev.start, to: ev.end, excluding: ev.id) } ?? false
                     let anyAdultFree = adults.contains { store.isAdultAvailable($0.id, from: ev.start, to: ev.end, excluding: ev.id) }

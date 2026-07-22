@@ -12,6 +12,8 @@ extension AppStore {
         anna.isCurrentUser = true
         let jonas = HouseholdMember(name: "Jonas Berg", role: .partner, color: .green)
         var mia = HouseholdMember(name: "Mia Berg", role: .child, color: .pink)
+        mia.birthYear = cal.component(.year, from: today) - 8
+        mia.supervisionUntilAge = 12
         mia.careInfo = "Grundschule Musterstadt"
         mia.pickups = [
             Pickup(weekday: 2, startMinutes: 15 * 60 + 30, responsibleID: nil, label: "Schule abholen"),      // Mo
@@ -95,7 +97,7 @@ extension AppStore {
         events.append(CalendarEvent(
             title: "Bei Oma übernachten (Mia)", start: at(5, 17), end: at(6, 10),
             category: .appointment, visibility: .household,
-            memberIDs: [mia.id], childSupervision: .informational))
+            memberIDs: [mia.id], childSupervision: .noParent))
 
         var tasks: [TaskItem] = [
             TaskItem(title: "Großeinkauf erledigen", assigneeID: nil,

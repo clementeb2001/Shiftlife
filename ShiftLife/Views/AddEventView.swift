@@ -20,6 +20,11 @@ struct AddEventView: View {
         memberIDs.contains { store.member($0)?.role == .child }
     }
 
+    /// A child that still needs supervision is involved (age-gated).
+    private var childNeedsSup: Bool {
+        memberIDs.compactMap { store.member($0) }.contains { $0.role == .child && $0.needsSupervisionByAge }
+    }
+
     /// New event.
     init() {
         let now = Calendar.current.date(bySettingHour: 18, minute: 0, second: 0, of: Date()) ?? Date()
@@ -32,7 +37,7 @@ struct AddEventView: View {
         _responsibleID = State(initialValue: nil)
         _notes = State(initialValue: "")
         _colorOverride = State(initialValue: nil)
-        _childSupervision = State(initialValue: .informational)
+        _childSupervision = State(initialValue: .parentRequired)
         existingID = nil
     }
 
@@ -47,7 +52,7 @@ struct AddEventView: View {
         _responsibleID = State(initialValue: nil)
         _notes = State(initialValue: "")
         _colorOverride = State(initialValue: nil)
-        _childSupervision = State(initialValue: .informational)
+        _childSupervision = State(initialValue: .parentRequired)
         existingID = nil
     }
 
@@ -62,7 +67,7 @@ struct AddEventView: View {
         _responsibleID = State(initialValue: existing.responsibleMemberID)
         _notes = State(initialValue: existing.notes)
         _colorOverride = State(initialValue: existing.colorOverride)
-        _childSupervision = State(initialValue: existing.childSupervision ?? (existing.category == .childcare ? .parentRequired : .informational))
+        _childSupervision = State(initialValue: (existing.childSupervision ?? .parentRequired).normalized)
         existingID = existing.id
     }
 
@@ -96,10 +101,10 @@ struct AddEventView: View {
                         .foregroundStyle(.primary)
                     }
                 }
-                if childInvolved || category == .childcare {
+                if childNeedsSup || category == .childcare {
                     Section("Kinder-Termin") {
                         Picker("Betreuung", selection: $childSupervision) {
-                            ForEach(ChildSupervision.allCases) { Text($0.label).tag($0) }
+                            ForEach(ChildSupervision.pickable) { Text($0.label).tag($0) }
                         }
                         Text(childSupervision.hint).font(.caption).foregroundStyle(Theme.subtleText)
                         Picker("Begleitperson (optional)", selection: $responsibleID) {
@@ -174,7 +179,7 @@ struct AddEventView: View {
         ev.responsibleMemberID = responsibleID
         ev.notes = notes
         ev.colorOverride = colorOverride
-        ev.childSupervision = childInvolved ? childSupervision : nil
+        ev.childSupervision = childInvolved ? childSupervision.normalized : nil
         store.upsertEvent(ev)
         dismiss()
     }
