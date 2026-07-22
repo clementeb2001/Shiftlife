@@ -50,13 +50,13 @@ enum ConflictEngine {
             if ev.category == .childcare || involvesChild {
                 let hasResponsible: Bool = {
                     if let resp = ev.responsibleMemberID {
-                        return !isBusy(store: store, memberID: resp, start: ev.start, end: ev.end)
+                        return store.isAdultAvailable(resp, from: ev.start, to: ev.end, excluding: ev.id)
                     }
                     return false
                 }()
                 if !hasResponsible {
                     // Are BOTH adults busy at that time? -> stronger "bothParentsWorking".
-                    let availableAdults = adults.filter { !isBusy(store: store, memberID: $0.id, start: ev.start, end: ev.end) }
+                    let availableAdults = adults.filter { store.isAdultAvailable($0.id, from: ev.start, to: ev.end, excluding: ev.id) }
                     if availableAdults.isEmpty && adults.count >= 1 {
                         conflicts.append(Conflict(
                             kind: .bothParentsWorking,

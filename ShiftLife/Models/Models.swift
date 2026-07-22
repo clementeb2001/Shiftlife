@@ -101,12 +101,30 @@ struct HouseholdMember: Identifiable, Codable, Hashable {
     var color: AppColor
     /// The device owner. Exactly one member is the current user in this local MVP.
     var isCurrentUser: Bool = false
+    /// For children: school / day-care description (V1.5 child profile).
+    var careInfo: String = ""
+    /// For children: recurring pickup slots used for childcare planning.
+    var pickups: [Pickup] = []
 
     var initials: String {
         let parts = name.split(separator: " ")
         let letters = parts.prefix(2).compactMap { $0.first }
         return String(letters).uppercased()
     }
+}
+
+/// A recurring pickup / care slot for a child (V1.5 Abholplanung).
+struct Pickup: Identifiable, Codable, Hashable {
+    var id: UUID = UUID()
+    /// Calendar weekday: 1 = Sunday … 7 = Saturday (matches `Calendar.component(.weekday)`).
+    var weekday: Int
+    /// Minutes from midnight.
+    var startMinutes: Int
+    /// Default responsible adult, or nil = still open (raises a conflict).
+    var responsibleID: UUID? = nil
+    var label: String = "Abholung"
+
+    var timeString: String { ShiftType.timeString(startMinutes) }
 }
 
 struct Household: Identifiable, Codable {
@@ -242,6 +260,10 @@ struct CalendarEvent: Identifiable, Codable, Hashable {
     /// Optional responsible person for a childcare/pickup event.
     var responsibleMemberID: UUID? = nil
     var notes: String = ""
+    /// True when auto-generated from a child's recurring pickup schedule.
+    var isGenerated: Bool = false
+    /// The child this generated event belongs to (for clean regeneration).
+    var sourceChildID: UUID? = nil
 }
 
 enum TaskCondition: String, Codable, CaseIterable, Identifiable {

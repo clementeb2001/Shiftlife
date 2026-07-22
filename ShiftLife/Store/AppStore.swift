@@ -21,43 +21,28 @@ struct AppData: Codable {
 
 final class AppStore: ObservableObject {
     @Published var data: AppData {
-        didSet { scheduleSave() }
+        didSet { if !inMemory { persistence.save(data) } }
     }
 
-    private let fileURL: URL
-    private var saveWorkItem: DispatchWorkItem?
+    /// Swappable storage backend. Local today; CloudKit-ready later (see CLOUDKIT.md).
+    private let persistence: PersistenceProvider
+    private let inMemory: Bool
 
     // MARK: Init / persistence
 
-    init(inMemory: Bool = false) {
-        let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        fileURL = dir.appendingPathComponent("shiftlife_data.json")
-
-        if !inMemory,
-           let raw = try? Data(contentsOf: fileURL),
-           let decoded = try? JSONDecoder.appDecoder.decode(AppData.self, from: raw) {
+    init(inMemory: Bool = false, persistence: PersistenceProvider = LocalJSONPersistence()) {
+        self.inMemory = inMemory
+        self.persistence = persistence
+        if !inMemory, let decoded = persistence.load() {
             data = decoded
         } else {
             data = AppStore.makeSampleData()
         }
     }
 
-    private func scheduleSave() {
-        saveWorkItem?.cancel()
-        let snapshot = data
-        let url = fileURL
-        let work = DispatchWorkItem {
-            if let raw = try? JSONEncoder.appEncoder.encode(snapshot) {
-                try? raw.write(to: url, options: .atomic)
-            }
-        }
-        saveWorkItem = work
-        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.4, execute: work)
-    }
-
     /// Wipes local data (GDPR "vollständige Löschung" requirement).
     func deleteAllData() {
-        try? FileManager.default.removeItem(at: fileURL)
+        persistence.wipe()
         data = AppStore.makeSampleData()
         data.hasCompletedOnboarding = false
     }
@@ -205,6 +190,47 @@ final class AppStore: ObservableObject {
         guard !m.isCurrentUser else { return }
         data.members.removeAll { $0.id == m.id }
         data.shiftInstances.removeAll { $0.memberID == m.id }
+        data.events.removeAll { $0.sourceChildID == m.id }
+    }
+
+    // MARK: Childcare / pickups (V1.5)
+
+    /// Upcoming childcare events (manual + generated) within `days`.
+    func upcomingChildcare(days: Int = 7) -> [CalendarEvent] {
+        let now = Date()
+        let end = Calendar.current.date(byAdding: .day, value: days, to: now)!
+        return data.events
+            .filter { $0.category == .childcare && $0.end >= now && $0.start <= end }
+            .sorted { $0.start < $1.start }
+    }
+
+    /// Regenerates childcare events for a child from its recurring pickups over
+    /// the next `horizonDays`. Clears previously generated events for that child.
+    @discardableResult
+    func regeneratePickupEvents(for childID: UUID, horizonDays: Int = 21) -> Int {
+        guard let child = member(childID), !child.pickups.isEmpty else {
+            data.events.removeAll { $0.sourceChildID == childID }
+            return 0
+        }
+        data.events.removeAll { $0.sourceChildID == childID }
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        var created = 0
+        for offset in 0..<horizonDays {
+            let day = cal.date(byAdding: .day, value: offset, to: today)!
+            let weekday = cal.component(.weekday, from: day)
+            for p in child.pickups where p.weekday == weekday {
+                let start = cal.date(byAdding: .minute, value: p.startMinutes, to: day)!
+                let end = cal.date(byAdding: .minute, value: 30, to: start)!
+                data.events.append(CalendarEvent(
+                    title: "\(p.label) – \(child.name.split(separator: " ").first.map(String.init) ?? child.name)",
+                    start: start, end: end, category: .childcare, visibility: .household,
+                    memberIDs: [childID], responsibleMemberID: p.responsibleID,
+                    isGenerated: true, sourceChildID: childID))
+                created += 1
+            }
+        }
+        return created
     }
 }
 

@@ -16,13 +16,10 @@ struct BusyInterval: Hashable {
 }
 
 extension AppStore {
-    /// Concrete busy time for a member across [rangeStart, rangeEnd), derived from
-    /// shift instances (+ optional rest after night) and events involving them.
-    func busyIntervals(for memberID: UUID, from rangeStart: Date, to rangeEnd: Date) -> [BusyInterval] {
+    /// Busy time coming only from shifts (+ optional rest after night).
+    func shiftBusyIntervals(for memberID: UUID, from rangeStart: Date, to rangeEnd: Date) -> [BusyInterval] {
         let cal = Calendar.current
         var result: [BusyInterval] = []
-
-        // --- Shifts ---
         for inst in data.shiftInstances where inst.memberID == memberID {
             guard let type = shiftType(inst.shiftTypeID) else { continue }
             guard type.counterCategory.blocksTime else { continue }
@@ -34,11 +31,8 @@ extension AppStore {
                 end = cal.date(byAdding: .day, value: 1, to: end)!
             }
             if start < rangeEnd && rangeStart < end {
-                result.append(BusyInterval(start: start, end: end, memberID: memberID,
-                                           reason: type.name))
+                result.append(BusyInterval(start: start, end: end, memberID: memberID, reason: type.name))
             }
-
-            // Rest period after (typically) a night shift.
             if data.considerRestAfterNight && type.restHours > 0 {
                 let restEnd = cal.date(byAdding: .hour, value: type.restHours, to: end)!
                 if end < rangeEnd && rangeStart < restEnd {
@@ -47,26 +41,39 @@ extension AppStore {
                 }
             }
         }
+        return result
+    }
 
-        // --- Events that involve the member ---
-        for ev in data.events where ev.memberIDs.contains(memberID) {
-            // A child's own appointment does not make the child "busy" for adult
-            // free-time purposes, but it does block the responsible adult.
-            if ev.start < rangeEnd && rangeStart < ev.end {
-                result.append(BusyInterval(start: ev.start, end: ev.end, memberID: memberID,
-                                           reason: ev.title))
-            }
-        }
-        // Childcare events also block the responsible adult even if not in memberIDs.
+    /// Busy time coming from events the member is part of, or responsible for.
+    func eventBusyIntervals(for memberID: UUID, from rangeStart: Date, to rangeEnd: Date) -> [BusyInterval] {
+        var result: [BusyInterval] = []
         for ev in data.events {
-            if let resp = ev.responsibleMemberID, resp == memberID,
-               !ev.memberIDs.contains(memberID),
-               ev.start < rangeEnd && rangeStart < ev.end {
-                result.append(BusyInterval(start: ev.start, end: ev.end, memberID: memberID,
-                                           reason: ev.title))
+            let involves = ev.memberIDs.contains(memberID) || ev.responsibleMemberID == memberID
+            if involves && ev.start < rangeEnd && rangeStart < ev.end {
+                result.append(BusyInterval(start: ev.start, end: ev.end, memberID: memberID, reason: ev.title))
             }
         }
+        return result
+    }
 
-        return result.sorted { $0.start < $1.start }
+    /// Concrete busy time for a member across [rangeStart, rangeEnd), derived from
+    /// shift instances (+ optional rest after night) and events involving them.
+    func busyIntervals(for memberID: UUID, from rangeStart: Date, to rangeEnd: Date) -> [BusyInterval] {
+        (shiftBusyIntervals(for: memberID, from: rangeStart, to: rangeEnd)
+         + eventBusyIntervals(for: memberID, from: rangeStart, to: rangeEnd))
+            .sorted { $0.start < $1.start }
+    }
+
+    /// Is an adult free to take responsibility for a slot? Considers blocking shifts
+    /// (+ rest) and *other* events, deliberately excluding one event by id so an
+    /// event's own responsible person isn't counted as busy by that same event.
+    func isAdultAvailable(_ memberID: UUID, from: Date, to: Date, excluding eventID: UUID? = nil) -> Bool {
+        if shiftBusyIntervals(for: memberID, from: from, to: to)
+            .contains(where: { $0.start < to && from < $0.end }) { return false }
+        for ev in data.events where ev.id != eventID {
+            let involves = ev.memberIDs.contains(memberID) || ev.responsibleMemberID == memberID
+            if involves && ev.start < to && from < ev.end { return false }
+        }
+        return true
     }
 }

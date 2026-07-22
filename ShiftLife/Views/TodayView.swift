@@ -22,6 +22,10 @@ struct TodayView: View {
         store.data.tasks.filter { !$0.isDone && ($0.dueDate.map { Calendar.current.isDateInToday($0) || $0 < Date() } ?? false) }
     }
 
+    private var upcomingCare: [CalendarEvent] { store.upcomingChildcare(days: 7) }
+
+    @State private var assigningEvent: CalendarEvent?
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -30,6 +34,7 @@ struct TodayView: View {
                     availabilityCard
                     if !conflicts.isEmpty { conflictsSummary }
                     nextTogetherCard
+                    if !upcomingCare.isEmpty { careCard }
                     if !todaysEvents.isEmpty { eventsCard }
                     if !openTasksToday.isEmpty { tasksCard }
                 }
@@ -44,6 +49,43 @@ struct TodayView: View {
                         SettingsView()
                     } label: { Image(systemName: "gearshape") }
                 }
+            }
+            .sheet(item: $assigningEvent) { ev in AssignEventSheet(event: ev) }
+        }
+    }
+
+    // MARK: Betreuung / Abholung
+
+    private func isCovered(_ ev: CalendarEvent) -> Bool {
+        guard let resp = ev.responsibleMemberID else { return false }
+        return store.isAdultAvailable(resp, from: ev.start, to: ev.end, excluding: ev.id)
+    }
+
+    private var careCard: some View {
+        Card {
+            VStack(alignment: .leading, spacing: Theme.Space.m) {
+                SectionHeader(title: "Betreuung & Abholung", systemImage: "figure.and.child.holdinghands")
+                ForEach(upcomingCare.prefix(5)) { ev in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(ev.title).fontWeight(.medium)
+                            Text("\(Format.relativeDay(ev.start)) · \(Format.time(ev.start))")
+                                .font(.caption).foregroundStyle(Theme.subtleText)
+                        }
+                        Spacer()
+                        if isCovered(ev), let who = store.member(ev.responsibleMemberID) {
+                            Chip(text: who.name.split(separator: " ").first.map(String.init) ?? who.name,
+                                 systemImage: "checkmark", color: Theme.success)
+                        } else {
+                            Button { assigningEvent = ev } label: {
+                                Chip(text: "Zuweisen", systemImage: "person.badge.plus", color: Theme.warning)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                Text("Abholzeiten pflegst du unter Einstellungen → Meine Personen → Kind.")
+                    .font(.caption).foregroundStyle(Theme.subtleText)
             }
         }
     }
@@ -200,5 +242,42 @@ struct TodayView: View {
                 }
             }
         }
+    }
+}
+
+/// Assigns a responsible adult to a single childcare event.
+struct AssignEventSheet: View {
+    @EnvironmentObject var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+    let event: CalendarEvent
+
+    private var adults: [HouseholdMember] { store.data.members.filter { $0.role != .child } }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("Wer übernimmt \(event.title)?") {
+                    ForEach(adults) { m in
+                        Button {
+                            var e = event
+                            e.responsibleMemberID = m.id
+                            store.upsertEvent(e)
+                            dismiss()
+                        } label: {
+                            HStack {
+                                MemberAvatar(member: m, size: 30)
+                                Text(m.name)
+                                Spacer()
+                            }
+                        }
+                        .foregroundStyle(.primary)
+                    }
+                }
+            }
+            .navigationTitle("Person zuweisen")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Abbrechen") { dismiss() } } }
+        }
+        .presentationDetents([.medium])
     }
 }
