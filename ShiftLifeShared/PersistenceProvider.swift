@@ -11,8 +11,15 @@ protocol PersistenceProvider {
     func load() -> AppData?
     /// Persist a snapshot (may be debounced/async internally).
     func save(_ data: AppData)
+    /// Persist a snapshot immediately and synchronously (used by extensions /
+    /// App Intents that finish before a debounced save would flush).
+    func saveNow(_ data: AppData)
     /// Remove all stored data (GDPR delete).
     func wipe()
+}
+
+extension PersistenceProvider {
+    func saveNow(_ data: AppData) { save(data) }
 }
 
 /// Local, offline-first store: a single JSON file in the shared App Group
@@ -40,6 +47,13 @@ final class LocalJSONPersistence: PersistenceProvider {
         }
         pending = work
         DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.4, execute: work)
+    }
+
+    func saveNow(_ data: AppData) {
+        pending?.cancel()
+        if let raw = try? JSONEncoder.appEncoder.encode(data) {
+            try? raw.write(to: fileURL, options: .atomic)
+        }
     }
 
     func wipe() {

@@ -57,6 +57,10 @@ final class AppStore: ObservableObject {
         self.data = snapshot
     }
 
+    /// Writes the current state to disk immediately (bypasses the debounced
+    /// save). For extensions / App Intents that mutate and then exit.
+    func flush() { persistence.saveNow(data) }
+
     /// Wipes local data (GDPR "vollständige Löschung" requirement).
     func deleteAllData() {
         persistence.wipe()
