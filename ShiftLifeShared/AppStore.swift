@@ -34,6 +34,11 @@ struct AppData: Codable {
     var activityCategories: [ActivityCategory] = []
     /// Commute minutes, used to compute the departure time on the dashboard.
     var commuteMinutes: Int = 25
+    /// Smart Shift Detection (#3): monitored work locations + auto-detect flag.
+    var workplaces: [Workplace] = []
+    var autoDetectEnabled: Bool = false
+    /// Partner Privacy Mode (#8): whether event titles are shared with the partner.
+    var privacyShareTitles: Bool = false
 }
 
 /// Local (on-device) reminder preferences. No server/push needed.

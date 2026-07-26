@@ -134,6 +134,55 @@ extension AppStore {
         return ev
     }
 
+    // MARK: Smart Shift Detection (#3) + Smart Handover (#9)
+
+    /// Applies a detected/edited later end to a shift, recording the overtime.
+    /// `newEndMinutes` is minutes from midnight (may be < start = crosses midnight).
+    func applyDetectedEnd(instanceID: UUID, newEndMinutes: Int) {
+        guard let i = data.shiftInstances.firstIndex(where: { $0.id == instanceID }) else { return }
+        let planned = effectiveMinutes(data.shiftInstances[i]).end
+        var over = newEndMinutes - planned
+        if over < 0 { over += 24 * 60 }
+        data.shiftInstances[i].endMinutesOverride = newEndMinutes
+        data.shiftInstances[i].isManualOverride = true
+        data.shiftInstances[i].overtimeMinutes = over
+    }
+
+    /// Childcare/appointments the shift's member is on the hook for that now
+    /// overlap the (possibly extended) shift – candidates for handover.
+    func handoverCandidates(for inst: ShiftInstance) -> [CalendarEvent] {
+        let me = inst.memberID
+        let s = shiftStartDate(inst), e = shiftEndDate(inst)
+        return data.events
+            .filter { ($0.responsibleMemberID == me || $0.memberIDs.contains(me))
+                && $0.category != .shared && $0.start < e && $0.end > s }
+            .sorted { $0.start < $1.start }
+    }
+
+    func reassignEvent(_ ev: CalendarEvent, to memberID: UUID) {
+        guard let i = data.events.firstIndex(where: { $0.id == ev.id }) else { return }
+        data.events[i].responsibleMemberID = memberID
+        if !data.events[i].memberIDs.contains(memberID) { data.events[i].memberIDs.append(memberID) }
+    }
+
+    // MARK: Partner Privacy Mode (#8)
+
+    /// A copy of the state suitable for sharing with a partner: when titles are
+    /// not shared, event titles/notes are replaced with neutral availability
+    /// labels (times stay, so coordination still works). Used by the privacy
+    /// preview today; the sync layer can adopt it once iCloud sharing is active.
+    func redactedForSharing() -> AppData {
+        guard !data.privacyShareTitles else { return data }
+        var d = data
+        d.events = d.events.map { ev in
+            var e = ev
+            e.notes = ""
+            e.title = (ev.visibility == .privateOnly) ? "Privat" : "Nicht verfügbar"
+            return e
+        }
+        return d
+    }
+
     // MARK: Personal insights
 
     func personalInsights() -> [String] {

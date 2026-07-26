@@ -281,6 +281,8 @@ struct ShiftInstance: Identifiable, Codable, Hashable {
     /// nil falls back to the shift type's default times.
     var startMinutesOverride: Int? = nil
     var endMinutesOverride: Int? = nil
+    /// Detected/recorded overtime in minutes (Smart Shift Detection #3).
+    var overtimeMinutes: Int? = nil
 }
 
 // MARK: - Calendar events & tasks

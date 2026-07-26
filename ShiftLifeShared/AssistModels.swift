@@ -1,5 +1,15 @@
 import Foundation
 
+/// A monitored work location for Smart Shift Detection (#3). Geofencing around
+/// this point can detect a late departure (overtime) on the real device.
+struct Workplace: Identifiable, Codable, Hashable {
+    var id: UUID = UUID()
+    var name: String
+    var latitude: Double
+    var longitude: Double
+    var radiusMeters: Double = 150
+}
+
 /// Adaptive routine: a task anchored relative to a shift (before start / after
 /// end). Moves automatically when the shift moves.
 struct ShiftRoutine: Identifiable, Codable, Hashable {
