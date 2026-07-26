@@ -40,7 +40,7 @@ struct AssistView: View {
                     }
                 }
             } header: { Text("🎒 Ready-Profile · #2") }
-            footer: { Text("Checklisten je Schichtart. Der Fortschritt pro Dienst erscheint auf „Heute".") }
+            footer: { Text("Checklisten je Schichtart. Der Fortschritt pro Dienst erscheint auf der Heute-Seite.") }
 
             // #6 Adaptive routines
             Section {
