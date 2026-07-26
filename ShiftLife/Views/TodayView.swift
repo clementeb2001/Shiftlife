@@ -25,11 +25,13 @@ struct TodayView: View {
     private var upcomingCare: [CalendarEvent] { store.upcomingChildcare(days: 7) }
 
     @State private var assigningEvent: CalendarEvent?
+    @State private var readyInst: ShiftInstance?
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: Theme.Space.l) {
+                    impactCard
                     myShiftCard
                     availabilityCard
                     if !conflicts.isEmpty { conflictsSummary }
@@ -44,6 +46,11 @@ struct TodayView: View {
             .background(Theme.groupedBackground.ignoresSafeArea())
             .navigationTitle("Heute")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink { AssistView() } label: {
+                        Label("Assistent", systemImage: "sparkles")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
                         SettingsView()
@@ -51,7 +58,74 @@ struct TodayView: View {
                 }
             }
             .sheet(item: $assigningEvent) { ev in AssignEventSheet(event: ev) }
+            .sheet(item: $readyInst) { inst in ReadyChecklistView(inst: inst) }
         }
+    }
+
+    // MARK: Impact dashboard (V2)
+
+    @ViewBuilder private var impactCard: some View {
+        let user = store.currentUser
+        if let inst = store.nextShift(for: user.id), let t = store.shiftType(inst.shiftTypeID) {
+            let start = store.shiftStartDate(inst)
+            let end = store.shiftEndDate(inst)
+            let prog = store.readyProgress(inst)
+            let pct = prog.total > 0 ? Int(Double(prog.done) / Double(prog.total) * 100) : 0
+            Card {
+                VStack(alignment: .leading, spacing: Theme.Space.m) {
+                    SectionHeader(title: "Nächster Dienst – Impact", systemImage: "sparkles")
+                    HStack(spacing: Theme.Space.m) {
+                        RoundedRectangle(cornerRadius: 6).fill(t.color.color).frame(width: 6, height: 46)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(t.name).font(.headline)
+                            Text("\(Format.time(start))–\(Format.time(end)) · \(Format.relativeDay(start))")
+                                .font(.caption).foregroundStyle(Theme.subtleText)
+                        }
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 1) {
+                            Text("beginnt").font(.caption2).foregroundStyle(Theme.subtleText)
+                            Text(countdown(to: start)).font(.subheadline.bold())
+                        }
+                    }
+                    HStack(spacing: Theme.Space.m) {
+                        Button { readyInst = inst } label: { readyRing(pct: pct) }
+                            .buttonStyle(.plain)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Ready-Status").fontWeight(.medium)
+                            Text("\(prog.done)/\(prog.total) · tippen zum Abhaken")
+                                .font(.caption).foregroundStyle(Theme.subtleText)
+                        }
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 1) {
+                            Label("Abfahrt", systemImage: "car.fill")
+                                .font(.caption2).foregroundStyle(Theme.subtleText)
+                            Text(Format.time(store.departureTime(inst))).font(.subheadline.bold())
+                        }
+                    }
+                    Text("Abfahrt = Dienstbeginn − \(store.data.commuteMinutes) Min Arbeitsweg (Assistent).")
+                        .font(.caption2).foregroundStyle(Theme.subtleText)
+                }
+            }
+        }
+    }
+
+    private func readyRing(pct: Int) -> some View {
+        ZStack {
+            Circle().stroke(Theme.subtleText.opacity(0.2), lineWidth: 5)
+            Circle().trim(from: 0, to: CGFloat(pct) / 100)
+                .stroke(Theme.brand, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Text("\(pct)%").font(.caption2.bold())
+        }
+        .frame(width: 50, height: 50)
+    }
+
+    private func countdown(to date: Date) -> String {
+        let mins = Int(date.timeIntervalSinceNow / 60)
+        if mins <= 0 { return "läuft" }
+        if mins < 60 { return "\(mins) Min" }
+        if mins < 1440 { let h = mins / 60, m = mins % 60; return m > 0 ? "in \(h) Std \(m) Min" : "in \(h) Std" }
+        return Format.relativeDay(date)
     }
 
     // MARK: Betreuung / Abholung
