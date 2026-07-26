@@ -24,6 +24,15 @@ struct SettingsView: View {
             }
 
             Section {
+                NavigationLink { WorkplacesView() } label: { Label("Arbeitsorte & Erkennung", systemImage: "location.fill.viewfinder") }
+                NavigationLink { PrivacyModeView() } label: { Label("Partner Privacy", systemImage: "eye.slash.fill") }
+            } header: {
+                Text("Assistent")
+            } footer: {
+                Text("Smart Shift Detection erkennt späteres Dienstende (Standort, nur am Gerät). Privacy steuert, was der Partner sieht.")
+            }
+
+            Section {
                 Button { showImport = true } label: {
                     Label("Termine aus Kalender importieren", systemImage: "calendar.badge.plus")
                 }

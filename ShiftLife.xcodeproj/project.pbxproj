@@ -306,6 +306,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = ShiftLife;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "ShiftLife liest deine Kalendertermine, um Konflikte mit deinen Diensten zu erkennen.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "ShiftLife erkennt rund um deine Dienste, wenn du den Arbeitsplatz später verlässt, um Überzeit vorzuschlagen.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "ShiftLife nutzt Geofencing im Hintergrund nur rund um geplante Dienste, um ein späteres Dienstende zu erkennen.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -336,6 +338,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = ShiftLife;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "ShiftLife liest deine Kalendertermine, um Konflikte mit deinen Diensten zu erkennen.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "ShiftLife erkennt rund um deine Dienste, wenn du den Arbeitsplatz später verlässt, um Überzeit vorzuschlagen.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "ShiftLife nutzt Geofencing im Hintergrund nur rund um geplante Dienste, um ein späteres Dienstende zu erkennen.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
