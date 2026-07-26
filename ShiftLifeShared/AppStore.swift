@@ -24,6 +24,16 @@ struct AppData: Codable {
     /// Opt-in flag for the (prepared) iCloud family sync. Off by default so the
     /// app is fully local until the iCloud capability is enabled on a Mac.
     var syncEnabled: Bool = false
+
+    // MARK: Assistent (V2 features)
+    /// Ready-Engine checklist state per shift occurrence: "typeID|dayISO" → done items.
+    var readyChecks: [String: [String]] = [:]
+    /// Adaptive routines anchored relative to a shift.
+    var routines: [ShiftRoutine] = []
+    /// Activity categories used for Life-Window suggestions.
+    var activityCategories: [ActivityCategory] = []
+    /// Commute minutes, used to compute the departure time on the dashboard.
+    var commuteMinutes: Int = 25
 }
 
 /// Local (on-device) reminder preferences. No server/push needed.
@@ -64,6 +74,7 @@ final class AppStore: ObservableObject {
         } else {
             data = AppStore.makeSampleData()
         }
+        if !inMemory { ensureAssistDefaults() }
     }
 
     /// Read-only store seeded with an existing snapshot – used by the widget

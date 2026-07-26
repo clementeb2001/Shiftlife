@@ -210,6 +210,9 @@ struct ShiftType: Identifiable, Codable, Hashable {
     /// common free time in the same way. `blocksTime == false` means the person is
     /// simply unavailable-labelled but still counts as free for planning.
     var counterCategory: ShiftCategory = .work
+    /// Ready-Engine: preparation checklist template shown before this shift. Empty
+    /// means "use the category default" (see AppStore.readyTemplate).
+    var readyItems: [String] = []
 
     var startTimeString: String { Self.timeString(startMinutes) }
     var endTimeString: String { Self.timeString(endMinutes) }
