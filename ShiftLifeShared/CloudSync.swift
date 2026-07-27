@@ -17,7 +17,11 @@ final class CloudSync {
     static let shared = CloudSync()
     static let containerID = "iCloud.com.shiftlife.app"
 
-    private let container = CKContainer(identifier: containerID)
+    // Created lazily: instantiating CKContainer requires the iCloud/CloudKit
+    // entitlement and crashes without it. Sync is off by default and every code
+    // path guards on `isActive`, so the container is only ever built once the
+    // capability is enabled and the user turns sync on – never at app launch.
+    private lazy var container = CKContainer(identifier: Self.containerID)
     private var database: CKDatabase { container.privateCloudDatabase }
     private let zoneID = CKRecordZone.ID(zoneName: "ShiftLifeZone", ownerName: CKCurrentUserDefaultName)
     private var recordID: CKRecord.ID { CKRecord.ID(recordName: "appState", zoneID: zoneID) }
