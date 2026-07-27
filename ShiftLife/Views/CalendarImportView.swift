@@ -18,7 +18,7 @@ struct CalendarImportView: View {
         NavigationStack {
             Group {
                 switch status {
-                case .fullAccess, .authorized:
+                case .fullAccess:
                     content
                 case .denied, .restricted:
                     deniedView
@@ -41,7 +41,7 @@ struct CalendarImportView: View {
     }
 
     private var canImport: Bool {
-        status == .fullAccess || status == .authorized
+        status == .fullAccess
     }
 
     // MARK: States
