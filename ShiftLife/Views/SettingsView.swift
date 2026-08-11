@@ -97,3 +97,9 @@ struct ExportView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Einstellungen") {
+    NavigationStack { SettingsView() }.environmentObject(AppStore.preview)
+}
+#endif

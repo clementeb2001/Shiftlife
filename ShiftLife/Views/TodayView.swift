@@ -355,3 +355,9 @@ struct AssignEventSheet: View {
         .presentationDetents([.medium])
     }
 }
+
+#if DEBUG
+#Preview("Heute") {
+    TodayView().environmentObject(AppStore.preview)
+}
+#endif

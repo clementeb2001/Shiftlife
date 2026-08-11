@@ -421,3 +421,9 @@ struct FlowLayoutSimple<Item: Identifiable, Content: View>: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Kalender") {
+    WeekView().environmentObject(AppStore.preview)
+}
+#endif

@@ -44,3 +44,9 @@ struct RootView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Ganze App") {
+    RootView().environmentObject(AppStore.preview)
+}
+#endif

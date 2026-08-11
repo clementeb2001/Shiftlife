@@ -260,3 +260,9 @@ struct FlowChips<Item: Identifiable, Content: View>: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Assistent") {
+    NavigationStack { AssistView() }.environmentObject(AppStore.preview)
+}
+#endif

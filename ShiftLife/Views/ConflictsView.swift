@@ -258,3 +258,9 @@ struct RescheduleTaskSheet: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Konflikte") {
+    ConflictsView().environmentObject(AppStore.preview)
+}
+#endif
